@@ -41,11 +41,13 @@ if not os.path.exists(plotDir):
     os.makedirs(plotDir)
 
 skimName = "Monophoton"
-skim = Measurement[skimName][0]
+# skim = Measurement[skimName][0]
+# skim = Measurement[skimName][1]
+skim = Measurement[skimName][-2]
 
-baseSel = SigmaIetaIetaSels[loc][pid]+' && '+ptSel+' && '+metSel
+baseSel = SigmaIetaIetaSels[loc][pid]+' && '+ptSel+' && '+metSel 
 
-outName = os.path.join(plotDir,'chiso_'+inputKey)
+outName = os.path.join(plotDir,'bkg_chiso_'+inputKey)
 print outName+'.root'
 outFile = TFile(outName+'.root','recreate')
 
@@ -53,20 +55,24 @@ canvas = TCanvas()
 histograms = []
 leg = TLegend(0.625,0.45,0.875,0.85 );
 leg.SetFillColor(kWhite);
-leg.SetTextSize(0.03);
+leg.SetTextSize(0.06);
 
 colors = [kBlue, kRed, kBlack]
+sels = [ (sieieSels[loc][pid], r'#sigma_{i#eta i#eta} < 0.01'), ('!'+sieieSels[loc][pid], r'#sigma_{i#eta i#eta} > 0.01') ]
 
-for iC, dR in enumerate([0.8,0.4,0.5]):
-    truthSel = '( (TMath::Abs(selPhotons.matchedGen) == 22) && (!selPhotons.hadDecay) && (selPhotons.drParton > '+str(dR)+') )'
-    fullSel = baseSel+' && '+truthSel
-    
+for iC, sel in enumerate(sels):
+# for iC, dR in enumerate([0.8,0.4,0.5]):
+    # truthSel = '( (TMath::Abs(selPhotons.matchedGen) == 22) && (!selPhotons.hadDecay) && (selPhotons.drParton > '+str(dR)+') )'
+    # fullSel = baseSel+' && '+truthSel
+    fullSel = baseSel+' && '+sel[0]
+
     hist = HistExtractor(var[0],var[3][loc],skim,fullSel,skimDir,varBins)
-    hist.SetName("ShapeChIso_dR"+str(int(dR*10)))
+    # hist.SetName("ShapeChIso_dR"+str(int(dR*10)))
+    hist.SetName(sel[0])
     hist.Scale( 1. / hist.GetSumOfWeights())
 
     hist.SetLineColor(colors[iC])
-    hist.SetLineWidth(2)
+    hist.SetLineWidth(4)
     hist.SetLineStyle(kDashed)
     hist.SetStats(False)
     
@@ -82,12 +88,13 @@ for iC, dR in enumerate([0.8,0.4,0.5]):
     hist.Write()
 
     canvas.cd()
-    if (dR == 0.1):
+    if not iC:
         hist.Draw("hist")
     else:
         hist.Draw("histsame")
 
-    leg.AddEntry(hist, 'dR > '+str(dR), 'L')
+    # leg.AddEntry(hist, 'dR > '+str(dR), 'L')
+    leg.AddEntry(hist, sel[1], 'L')
     histograms.append(hist)
 
 outFile.Close()
