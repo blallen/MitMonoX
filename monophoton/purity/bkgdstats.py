@@ -92,13 +92,13 @@ plotDir = os.path.join(versDir,'Plots','SignalContam',inputKey)
 if not os.path.exists(plotDir):
     os.makedirs(plotDir)
 
-sigSel = s.SigmaIetaIetaSels[loc][pid]+' && '+s.chIsoSels[loc][pid]+' && '+ptSel+' && '+metSel
-sbSel = s.SigmaIetaIetaSels[loc][pid]+' && '+chIsoSel+' && '+ptSel+' &&'+metSel
+sigSel = s.SigmaIetaIetaSels[loc][pid]+' && '+s.chIsoSels[loc][pid]+' && '+ptSel+' && t1Met.met > 60. && t1Met.photonDPhi < 0.5'
+sbSel = s.SigmaIetaIetaSels[loc][pid]+' && '+chIsoSel+' && '+ptSel+' && t1Met.met > 60. && t1Met.photonDPhi < 0.5'
 truthSel =  '(photons.matchedGen == -22)'
 
 # fit, signal, contamination, background, contamination scaled, background
 skims = s.Measurement["Monophoton"]
-sels = [ sigSel
+sels = [ sigSel+ ' && t1Met.photonDPhi < 0.5 && t1Met.met > 170.'
          ,sigSel+' && '+truthSel
          ,sbSel+' && '+truthSel
          ,sbSel
@@ -142,6 +142,7 @@ scaledPurity = s.SignalSubtraction(scaledSkims,scaledHists,scaledTemplates,scale
 # scaledUncertainty = abs( nominalPurity[0][0] - scaledPurity[0][0] )
 scaledUncertainty = abs( nominalPurity[0] - scaledPurity[0] )
 
+"""
 print "\n\n##############################\n######## Doing background stat uncertainty ########\n##############################\n\n"
 ### Get background stat uncertainty
 toyPlot = TH1F("toyplot","Impurity Difference from Background Template Toys", 100, -5, 5)
@@ -214,6 +215,7 @@ toyPlot.Draw()
 toyCanvas.SaveAs(toyPlotName+'.pdf')
 toyCanvas.SaveAs(toyPlotName+'.png')
 toyCanvas.SaveAs(toyPlotName+'.C')
+"""
 
 print "\n\n##############################\n######## Doing signal shape uncertainty ########\n##############################\n\n"
 ### Get signal shape uncertainty
@@ -240,6 +242,6 @@ print "\n\n##############################\n######## Showing results ########\n##
 print "Nominal purity is:", nominalPurity[0]
 print "Method uncertainty is:", scaledUncertainty
 print "Signal shape uncertainty is:", twobinUncertainty
-print "Background stat uncertainty is:", bkgdUncertainty
-totalUncertainty = ( (scaledUncertainty)**2 + (twobinUncertainty)**2 + (bkgdUncertainty)**2 )**(0.5)
-print "Total uncertainty is:", totalUncertainty
+# print "Background stat uncertainty is:", bkgdUncertainty
+# totalUncertainty = ( (scaledUncertainty)**2 + (twobinUncertainty)**2 + (bkgdUncertainty)**2 )**(0.5)
+# print "Total uncertainty is:", totalUncertainty
