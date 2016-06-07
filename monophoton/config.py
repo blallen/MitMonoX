@@ -1,4 +1,4 @@
-skimDir = '/scratch5/ballen/hist/monophoton/skim'
+skimDir = '/scratch5/ballen/hist/monophoton/skim/2015'
 histDir = '/home/ballen/cms/root'
 ntuplesDir = '/scratch5/yiiyama/hist/simpletree13c/t2mit/'
 dataNtuplesDir = ntuplesDir # .replace('13c', '14') 
