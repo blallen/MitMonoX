@@ -24,7 +24,7 @@ for loc in Locations[:1]:
         purities[loc][pid] = {}
         for ptCut in PhotonPtSels[1:]:
             purities[loc][pid][ptCut[0]] = {}
-            for metCut in MetSels[1:]:
+            for metCut in MetSels[:2]:
                 purities[loc][pid][ptCut[0]][metCut[0]] = {}
                 
                 purityFileName = "purity_data_"+loc+"_"+pid+"_"+ptCut[0]+"_"+metCut[0]+"_ex.tex"
