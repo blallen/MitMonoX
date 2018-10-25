@@ -1,8 +1,13 @@
 import os
+import sys
+
+thisdir = os.path.dirname(os.path.realpath(__file__))
+basedir = os.path.dirname(thisdir)
+sys.path.append(basedir)
 import config
 
 outputName = 'efake17_pixelpf'
-outputDir = '/data/t3home000/' + os.environ['USER'] + '/monophoton/' + outputName 
+outputDir = '/data/t3home000/' + os.environ['USER'] + '/monophoton' + config.year + '/' + outputName 
 roofitDictsDir = '/home/ballen/cms/cmssw/010/CMSSW_9_4_4/src/RooFit'
 
 PRODUCT = 'frate'
@@ -11,11 +16,11 @@ PRODUCT = 'frate'
 # analysis = 'monophoton'
 analysis = 'darkphoton'
 
-dataSource = 'sph' # sph or sel or smu
+dataSource = 'sel' # sph or sel or smu
 if 'sph' in dataSource:
-    monophSel = 'probes.scRawPt > 175.'
+    monophSel = 'probes.scRawPt > 200.'
 elif 'sel' in dataSource:
-    monophSel = 'probes.scRawPt > 25. && probes.scRawPt < 175.'
+    monophSel = 'probes.scRawPt > 25. && probes.scRawPt < 200.'
 
 # panda::XPhoton::IDTune { 0 : S15, 1 : S16, 2 : GJCWiso, 3 : ZGCWIso }
 if analysis == 'monophoton':
@@ -74,7 +79,7 @@ lumiSamples = skimConfig['phdata'+config.year][0]
 def getBinning(binningName):
     if binningName == 'inclusive':
         binningTitle = 'p_{T}^{probe} (GeV)'
-        binning = [175., 6500.]
+        binning = [200., 6500.]
         
         fitBins = []
         for iBin in range(len(binning) - 1):
@@ -102,7 +107,7 @@ def getBinning(binningName):
 
     elif binningName == 'ptalt':
         binningTitle = 'p_{T}^{probe} (GeV)'
-        binning = [175., 200., 250., 300., 350., 400., 6500.]
+        binning = [200., 250., 300., 350., 6500.]
         
         fitBins = []
         for iBin in range(len(binning) - 1):
@@ -150,7 +155,7 @@ def getBinning(binningName):
 
     elif binningName == 'lowpt':
         binningTitle = 'p_{T}^{probe} (GeV)'
-        binning = [24., 28., 32., 35., 38., 40., 42., 44., 46., 48., 50., 54., 58., 62., 66., 70., 75., 80., 85., 90., 100., 120., 140., 160.]
+        binning = [24., 28., 32., 35., 38., 40., 42., 44., 46., 48., 50., 54., 58., 62., 66., 70., 75., 80., 85., 90., 100., 120., 140., 160., 180., 200.]
         
         fitBins = []
         for iBin in range(len(binning) - 1):

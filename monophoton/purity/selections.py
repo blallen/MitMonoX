@@ -25,13 +25,13 @@ bases = ['medium'] # ['loose', 'medium', 'tight', 'highpt']
 mods = ['', '-pixel', '-pixel-chargedpf'] # , '-pixel-monoph'] 
 
 # Skims for Purity Calculation
-sphData = ['sph-16b-m', 'sph-16c-m', 'sph-16d-m', 'sph-16e-m', 'sph-16f-m', 'sph-16g-m', 'sph-16h-m']
-gjetsMc = ['gj04-100', 'gj04-200','gj04-400','gj04-600']
+sphData = ['sph-17b', 'sph-17c', 'sph-17d', 'sph-17e', 'sph-17f']
+gjetsMc = ['gj-100', 'gj-200','gj04-400','gj-600']
 qcdMc = ['qcd-200', 'qcd-300', 'qcd-500', 'qcd-700', 'qcd-1000', 'qcd-1000', 'qcd-1500', 'qcd-2000']
 
 sphLumi = sum(allsamples[s].lumi for s in sphData)
 
-lowpt = True
+lowpt = False
 
 ### Various load-time operations ###
 
@@ -81,7 +81,7 @@ photonPtVar = 'photons.scRawPt[0]'
 if lowpt:
     photonPtBinning = [80., 90., 100., 120., 160., 200.]
 else:
-    photonPtBinning = [175,200,250,300,350,400]
+    photonPtBinning = [200,250,300,350,400]
 
 PhotonPtSels = {
     'PhotonPtInclusive': '{pt} > %d'.format(pt = photonPtVar) % photonPtBinning[0],

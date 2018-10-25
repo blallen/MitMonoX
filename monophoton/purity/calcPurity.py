@@ -66,7 +66,9 @@ except KeyError:
 ### Directory stuff so that results are saved and such
 versDir = s.versionDir
 plotDir = os.path.join('purity', s.Version, inputKey)
+print WEBDIR + '/' + plotDir
 histDir = os.path.join(versDir, inputKey)
+print histDir
 if not os.path.exists(WEBDIR + '/' + plotDir):
     os.makedirs(WEBDIR + '/' + plotDir)
 if not os.path.exists(histDir):
@@ -283,6 +285,8 @@ def plotSigContam(hdata, hmc, name = '', pdir = plotDir):
     text = 'Sig. Contam: {contam}%'.format(contam = round(contam,1))
     scanvas.addText(text, 0.225, 0.4, 0.4, 0.6)
 
+    scanvas.ylimits = (0.1, 1e6)
+
     scanvas.printWeb(pdir + '/sbcontam' , 'sbcontam_' + name, logy = False)
 
 plotSigContam(hDataBkgNom, hMCSBNom, name = 'nominal')
@@ -350,6 +354,7 @@ def runSSFit(datasb, mcsb, sbRatio, name = '', pdir = plotDir, mcsig = hMCSignal
 
         if name:
             if not 'toy' in name:
+                print 'plotting'
                 plotSSFit(ssfitter, purity, nReal, name, pdir)
 
     else:

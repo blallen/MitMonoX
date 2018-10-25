@@ -109,7 +109,7 @@ class Legend(object):
         self.legend = ROOT.TLegend(x1, y1, x2, y2)
         self.legend.SetFillStyle(0)
         self.legend.SetBorderSize(0)
-        self.legend.SetTextSize(0.025)
+        self.legend.SetTextSize(0.050)
         self.legend.SetTextFont(42)
         self.legend.SetTextAlign(12)
 

@@ -181,8 +181,8 @@ def plotiso(loc, pid, pt, met, tune):
     print 'Extracting electron data distributions'
     
     dataTree = ROOT.TChain('events')
-    for sample in allsamples.getmany('sph-16*'):
-        dataTree.Add(utils.getSkimPath(sample.name, 'tpeg'))
+    for sample in s.Samples['sphData']:
+        dataTree.Add(utils.getSkimPath(sample, 'tpeg'))
 
     print 'Draw(' + eExpr + ', ' + eSel + ')'
 
@@ -240,6 +240,6 @@ if __name__ == '__main__':
     try:
         tune = sys.argv[5]
     except:
-        tune = 'Spring15'
+        tune = 'Spring16'
 
     plotiso(loc, pid, pt, met, tune)
