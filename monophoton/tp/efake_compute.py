@@ -208,7 +208,7 @@ canvas.SetGrid(False, True)
 canvas.legend.setPosition(0.7, 0.8, 0.9, 0.9)
 if PRODUCT == 'frate':
     canvas.legend.add(PRODUCT, 'R_{e}', opt = 'LFP', mcolor = ROOT.kBlack, lcolor = ROOT.kBlack, fcolor = ROOT.kGray, mstyle = 8)
-    canvas.ylimits = (0., 0.1)
+    canvas.ylimits = (0., 0.05)
 else:
     canvas.legend.add(PRODUCT, '#epsilon_{e}', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
     canvas.ylimits = (0.75, 1.)
