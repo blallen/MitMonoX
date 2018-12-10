@@ -6,13 +6,13 @@ import os
 import ROOT
 ROOT.gROOT.SetBatch(True)
 
-thisdir = os.path.dirname(os.path.realpath(__file__))
-basedir = os.path.dirname(thisdir)
-sys.path.append(basedir)
 from plotstyle import SimpleCanvas
 import config
 
-from trigger.confs import measurements, confs, fitconfs
+tconf = importlib.import_module('configs.' + config.config + '.trigger')
+measurements = tconf.measurements
+confs = tconf.confs
+fitconfs = tconf.fitconfs
 
 oname, mname1, mname2 = sys.argv[1:4]
 if len(sys.argv) > 4:

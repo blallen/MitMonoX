@@ -19,6 +19,10 @@
 #include <fstream>
 #include <stdexcept>
 #include <chrono>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
 typedef std::chrono::steady_clock SClock;
 
 unsigned TIMEOUT(300);
@@ -38,6 +42,7 @@ public:
   void run(char const* outputDir, char const* sampleName, bool isData, long nEntries = -1, long firstEntry = 0);
   void prepareEvent(panda::Event const&, panda::EventMonophoton&, panda::GenParticleCollection const* = 0);
   void setPrintLevel(unsigned l) { printLevel_ = l; }
+  void setNThreads(unsigned n) { nThreads_ = n; }
   void setCompatibilityMode(bool r) { compatibilityMode_ = r; }
 
 private:
@@ -48,6 +53,7 @@ private:
   bool skipMissingFiles_{false};
   unsigned printEvery_{10000};
   unsigned printLevel_{0};
+  int nThreads_{1};
   bool compatibilityMode_{false};
 };
 
@@ -166,8 +172,18 @@ Skimmer::run(char const* _outputDir, char const* _sampleName, bool isData, long 
   if (printLevel_ > 0 && printLevel_ <= DEBUG)
     branchList.setVerbosity(1);
 
+  std::vector<std::thread> threads;
+  std::mutex mutex;
+  std::condition_variable cv;
+  std::atomic_int activate{0};
+  std::atomic_int nActive{0};
+
+  int nSel(selectors_.size());
+  activate = nSel;
+
   TString commonSelection(selectors_[0]->getPreskim());
 
+  int iSel(0);
   for (auto* sel : selectors_) {
     sel->setPrintLevel(printLevel_, stream);
 
@@ -178,10 +194,49 @@ Skimmer::run(char const* _outputDir, char const* _sampleName, bool isData, long 
       // this case is filtered out by ssw2.py
       throw std::runtime_error("inconsistent preskims");
     }
+
+    if (nThreads_ > 1) {
+      threads.emplace_back([this, sel, &skimmedEvent, &mutex, &cv, &activate, &nActive, iSel]() {
+          std::unique_lock<std::mutex> lock(mutex);
+
+          while (true) {
+            cv.wait(lock, [this, &activate, &nActive, iSel]() {
+                //              std::cout << "woken " << iSel << " " << activate.load() << " " << nActive.load() << std::endl;
+                return activate.load() == iSel && nActive.load() < this->nThreads_; });
+
+            ++activate;
+
+            if (nActive.load() < 0)
+              break;
+
+            ++nActive;
+            lock.unlock();
+
+            //          std::cout << "upped activate " << iSel << std::endl;
+
+            cv.notify_all();
+
+            //          std::cout << "notified and unlocked " << iSel << std::endl;
+
+            sel->selectEvent(skimmedEvent);
+
+            //          std::cout << "event selected " << iSel << std::endl;
+
+            lock.lock();
+            --nActive;
+            cv.notify_all();
+          }
+
+          cv.notify_all();
+        });
+    }
+
+    ++iSel;
   }
 
   // if the selectors register triggers, make sure the information is passed to the actual input event
-  event.run = skimmedEvent.run;
+  static_cast<panda::EventBase&>(event).operator=(skimmedEvent);
+  skimmedEvent.triggerObjects.setIgnoreMissing(true);
 
   if (goodLumiFilter_)
     *stream << "Applying good lumi filter." << std::endl;
@@ -251,7 +306,7 @@ Skimmer::run(char const* _outputDir, char const* _sampleName, bool isData, long 
         break;
     }
     catch (std::exception& _ex) {
-      *stream << "Error while processing " << mainInput.GetCurrentFile()->GetName() << std::endl;
+      *stream << "Error while reading " << mainInput.GetCurrentFile()->GetName() << std::endl;
       throw;
     }
 
@@ -259,6 +314,9 @@ Skimmer::run(char const* _outputDir, char const* _sampleName, bool isData, long 
       continue;
 
     if (mainTreeNumber != mainInput.GetTreeNumber()) {
+      if (printLevel_ > 0 && printLevel_ <= INFO)
+        *stream << "Opened a new file " << mainInput.GetCurrentFile()->GetName() << std::endl;
+
       mainTreeNumber = mainInput.GetTreeNumber();
       // invalidate output event run number so it gets updated in prepareEvent
       skimmedEvent.run.runNumber = 0;
@@ -299,8 +357,37 @@ Skimmer::run(char const* _outputDir, char const* _sampleName, bool isData, long 
       debugFile << ">>>>> Event " << iEntry << " done!!! <<<<<" << std::endl << std::endl;
     }
 
-    for (auto* sel : selectors_)
-      sel->selectEvent(skimmedEvent);
+    try {
+      if (nThreads_ > 1) {
+        std::unique_lock<std::mutex> lock(mutex);
+        activate = 0;
+        nActive = 0;
+        cv.notify_all();
+        cv.wait(lock, [&activate, &nActive, nSel]() { return activate.load() == nSel && nActive.load() == 0; });
+      }
+      else {
+        for (auto* sel : selectors_)
+          sel->selectEvent(skimmedEvent);
+      }
+    }
+    catch (std::exception& ex) {
+      *stream << "Error while processing event " << event.runNumber << ":" << event.lumiNumber << ":" << event.eventNumber;
+      *stream << " in file " << mainInput.GetCurrentFile()->GetName() << std::endl;
+      *stream << ex.what() << std::endl;
+      throw;
+    }
+  }
+
+  if (nThreads_ > 1) {
+    {
+      std::unique_lock<std::mutex> lock(mutex);
+      activate = 0;
+      nActive = -1;
+      cv.notify_all();
+    }
+
+    for (auto& th : threads)
+      th.join();
   }
 
   delete preselection;

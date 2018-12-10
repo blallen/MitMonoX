@@ -171,7 +171,6 @@ if __name__ == '__main__':
     
     argParser = ArgumentParser(description = 'Plot and count')
     argParser.add_argument('args', metavar = 'ARGS', nargs = '+', help = 'List of samples followed by list of events.')
-    argParser.add_argument('--catalog', '-c', metavar = 'PATH', dest = 'catalog', default = '/home/cmsprod/catalog/t2mit', help = 'Source file catalog.')
     argParser.add_argument('--event-list', '-l', metavar = 'PATH', dest = 'eventLists', nargs = '+', default = [], help = 'List events in a file instaed of passing in command line.')
     argParser.add_argument('--filesets', '-f', metavar = 'ID', dest = 'filesets', nargs = '+', default = [], help = 'Fileset id to run on.')
     argParser.add_argument('--files', '-i', metavar = 'PATH', dest = 'files', nargs = '+', default = [], help = 'Directly run on files.')
@@ -245,7 +244,6 @@ if __name__ == '__main__':
 
     ## set up samples and selectors
     import datasets
-    datasets.catalogDir = args.catalog
 
     samples = datasets.allsamples.getmany(snames)
 

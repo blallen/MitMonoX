@@ -1,21 +1,10 @@
-import os
-import sys
 import array
 import copy
 import re
-from pprint import pprint
-
-thisdir = os.path.dirname(os.path.realpath(__file__))
-basedir = os.path.dirname(thisdir)
-sys.path.append(basedir)
+import collections
+import ROOT
 
 from datasets import allsamples
-
-argv = list(sys.argv)
-sys.argv = []
-import ROOT
-black = ROOT.kBlack # need to load something from ROOT to actually import
-sys.argv = argv
 
 class GroupSpec(object):
     def __init__(self, name, title, samples = [], region = '', count = 0., color = ROOT.kBlack, altbaseline = '', cut = '', scale = 1., norm = -1.):
@@ -31,6 +20,8 @@ class GroupSpec(object):
         self.norm = norm # use to normalize histograms post-fill. Set to the expected number of events after full selection
         self.variations = []
 
+    def addVariation(self, name, **kwd):
+        self.variations.append(Variation(name, **kwd))
 
 class SampleSpec(object):
     # use for signal point spec
@@ -44,14 +35,12 @@ class SampleSpec(object):
 
 
 class PlotDef(object):
-    def __init__(self, name, title, expr, binning, unit = '', cut = '', applyBaseline = True, applyFullSel = False, blind = None, sensitive = False, overflow = False, mcOnly = False, logy = None, ymax = -1., ymin = 0.):
+    def __init__(self, name, title, expr, binning, unit = '', cutName = 'baseline', blind = None, sensitive = False, overflow = False, mcOnly = False, logy = None, ymax = -1., ymin = 0.):
         self.name = name
         self.title = title
         self.unit = unit
         self.expr = expr # expression to plot
-        self.cut = cut # additional cuts if any (applied to all samples)
-        self.applyBaseline = applyBaseline # True -> fill only when PlotConfig baseline cut is satisfied
-        self.applyFullSel = applyFullSel # True -> fill only when PlotConfig full cut is satisfied
+        self.cutName = cutName # Name of the cut the plot belongs to
         self.binning = binning
         self.blind = blind # 'full' or a range in 2-tuple. Always takes effect if set.
         self.sensitive = sensitive # whether to add signal distributions + prescale observed
@@ -62,7 +51,7 @@ class PlotDef(object):
         self.ymin = ymin
 
     def clone(self, name, **keywords):
-        for vname in ['title', 'unit', 'expr', 'cut', 'applyBaseline', 'applyFullSel', 'binning', 'blind', 'overflow', 'logy', 'ymax', 'sensitive']:
+        for vname in ['title', 'unit', 'expr', 'cutName', 'binning', 'blind', 'overflow', 'logy', 'ymax', 'sensitive']:
             if vname not in keywords:
                 keywords[vname] = copy.copy(getattr(self, vname))
 
@@ -193,32 +182,6 @@ class PlotDef(object):
         else:
             return self.title[1]
 
-    def formSelection(self, plotConfig, prescale = 1, replacements = []):
-        cuts = []
-        if self.applyBaseline:
-            cuts.append(plotConfig.baseline)
-    
-        if self.cut:
-            cuts.append(self.cut)
-    
-        if self.applyFullSel:
-            cuts.append(plotConfig.fullSelection)
-    
-        if prescale > 1 and self.blind is None:
-            cuts.append('event % {prescale} == 0'.format(prescale = prescale))
-
-        if len(cuts) != 0:
-            selection = ' && '.join(['(%s)' % c for c in cuts if c != ''])
-        else:
-            selection = ''
-
-        for repl in replacements:
-            # replace the variable names given in repl = ('original', 'new')
-            # enclose the original variable name with characters that would not be a part of the variable
-            selection = re.sub(r'([^_a-zA-Z]?)' + repl[0] + r'([^_0-9a-zA-Z]?)', r'\1' + repl[1] + r'\2', selection)
-            
-        return selection
-
     def formExpression(self, replacements = None):
         if self.ndim() == 1:
             expr = self.expr
@@ -237,24 +200,27 @@ class PlotDef(object):
 
 
 class PlotConfig(object):
-    def __init__(self, name, obsSamples = []):
-        self.name = name # name serves as the default region selection (e.g. monoph)
-        self.baseline = '1'
+    def __init__(self):
+        self.name = '' # name serves as the default region selection (e.g. monoph)
+        self.baseline = ''
         self.fullSelection = ''
-        self.obs = GroupSpec('data_obs', 'Observed', samples = allsamples.getmany(obsSamples))
-        self.prescales = dict([(s, 1) for s in self.obs.samples])
+        self.obs = GroupSpec('data_obs', 'Observed')
+        self.prescales = {}
         self.sigGroups = []
         self.signalPoints = []
         self.bkgGroups = []
+        self.cuts = {}
+        self.aliases = collections.OrderedDict()
         self.plots = []
         self.treeMaker = ''
 
-        self.plots.append(PlotDef('count', '', '0.5', (1, 0., 1.), applyFullSel = True))
+        self.plots.append(PlotDef('count', '', '0.5', (1, 0., 1.), cutName = 'fullSelection'))
 
-    def addObs(self, sname, prescale = 1):
-        sample = allsamples[sname]
-        self.obs.samples.append(sample)
-        self.prescales[sample] = prescale
+    def addObs(self, snames, prescale = 1):
+        samples = allsamples.getmany(snames)
+        for sample in samples:
+            self.obs.samples.append(sample)
+            self.prescales[sample] = prescale
 
     def addSig(self, *args, **kwd):
         if len(args) > 2:
@@ -340,3 +306,8 @@ class Variation(object):
         #  single float -> scale up and down uniformly.
         #  string -> use branches 'reweight_%sUp' & 'reweight_%sDown'. Output suffix _{name}Up & _{name}Down
         self.reweight = reweight
+
+
+# Variables to be set by plotconfig.py
+confName = ''
+plotConfig = PlotConfig()

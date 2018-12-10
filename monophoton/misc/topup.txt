@@ -5,7 +5,7 @@
   datasets.py recalculate <samples> --save
 
 . Compute the data pileup distribution and construct the PU weights
-  pileupCalc.py -i data/lumis_plain.txt --inputLumiJSON /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions${YEAR}/13TeV/PileUp/pileup_latest.txt --calcMode true --minBiasXsec 69200 --maxPileupBin 100 --numPileupBins 100 dataPileup.root
+  pileupCalc.py -i data/lumis_plain.txt --inputLumiJSON /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions${YEAR}/13TeV/PileUp/pileup_latest.txt --calcMode true --minBiasXsec 80000 --maxPileupBin 100 --numPileupBins 100 dataPileup.root
   misc/puweight.py $PWD/data/pileup.root dataPileup.root 
 
 . Run the trigger efficiency measurement and update the L1 fit parameters in selectors.py

@@ -9,9 +9,9 @@ def getEnum(cls, name):
     return ROOT.val
 
 measurements = {
-    ('photon', 'sel'): ('sel-16*-m', 'tpeg', 'probes.medium && !probes.pixelVeto && tp.mass > 60. && tp.mass < 120. && TMath::Abs(TVector2::Phi_mpi_pi(probes.phi_ - tags.phi_)) > 0.6', 'probes'),
-    ('photon', 'selBCD'): (['sel-16b-m', 'sel-16c-m', 'sel-16d-m'], 'tpeg', 'probes.medium && !probes.pixelVeto && tp.mass > 60. && tp.mass < 120. && TMath::Abs(TVector2::Phi_mpi_pi(probes.phi_ - tags.phi_)) > 0.6 && runNumber < 276525', 'probes'), # for photon75
-    ('photon', 'dy'): (['dy-50@', 'dy-50-*'], 'tpeg', 'probes.medium && !probes.pixelVeto && tp.mass > 60. && tp.mass < 120. && TMath::Abs(TVector2::Phi_mpi_pi(probes.phi_ - tags.phi_)) > 0.6', 'probes'),
+    ('photon', 'sel'): ('sel-16b-m', 'tpegLowPt', 'probes.medium && !probes.pixelVeto && tp.mass > 60. && tp.mass < 120. && TMath::Abs(TVector2::Phi_mpi_pi(probes.phi_ - tags.phi_)) > 0.6', 'probes'),
+    ('photon', 'selBCD'): (['sel-16b-m', 'sel-16c-m', 'sel-16d-m'], 'tpegLowPt', 'probes.medium && !probes.pixelVeto && tp.mass > 60. && tp.mass < 120. && TMath::Abs(TVector2::Phi_mpi_pi(probes.phi_ - tags.phi_)) > 0.6 && runNumber < 276525', 'probes'), # for photon75
+    ('photon', 'dy'): (['dy-50@', 'dy-50-*'], 'tpegLowPt', 'probes.medium && !probes.pixelVeto && tp.mass > 60. && tp.mass < 120. && TMath::Abs(TVector2::Phi_mpi_pi(probes.phi_ - tags.phi_)) > 0.6', 'probes'),
     ('photon', 'elmu'): (['smu-16*-m'], 'elmu', 'photons.mediumX[][2]', 'photons'),
     ('photon', 'elmuBCD'): (['smu-16b-m', 'smu-16c-m', 'smu-16d-m'], 'elmu', 'photons.mediumX[][2]', 'photons'),
     ('photon', 'ph75'): (['sph-16b-m', 'sph-16c-m', 'sph-16d-m'], 'ph75', 'photons.medium && HLT_Photon50 && runNumber < 276525', 'photons'),

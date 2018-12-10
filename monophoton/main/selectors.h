@@ -11,6 +11,7 @@
 #include <vector>
 #include <chrono>
 #include <iostream>
+#include <mutex>
 
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -21,7 +22,7 @@ public:
   EventSelectorBase(char const* name) : name_(name) {}
   virtual ~EventSelectorBase();
 
-  void addOperator(Operator*, unsigned idx = -1);
+  virtual void addOperator(Operator*, unsigned idx = -1);
   unsigned size() const { return operators_.size(); }
   Operator* getOperator(unsigned iO) const { return operators_.at(iO); }
   Operator* findOperator(char const* name) const;
@@ -41,6 +42,8 @@ public:
   void setOwnOperators(bool b) { ownOperators_ = b; }
   void setUseTimers(bool b) { useTimers_ = b; }
   void setPrintLevel(unsigned l, std::ostream* st = 0) { printLevel_ = l; if (st) stream_ = st; }
+
+  static std::mutex mutex;
 
 protected:
   virtual void setupSkim_(panda::EventMonophoton& inEvent, bool isMC) {}
@@ -162,6 +165,8 @@ class TagAndProbeSelector : public EventSelectorBase {
 public:
   TagAndProbeSelector(char const* name) : EventSelectorBase(name) {}
   ~TagAndProbeSelector() {}
+
+  void addOperator(Operator*, unsigned idx = -1) override;
 
   void setOutEventType(TPEventType t) { outType_ = t; }
   void selectEvent(panda::EventMonophoton&) override;

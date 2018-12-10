@@ -25,6 +25,7 @@ namespace panda {
     panda::XPhoton::IDTune const nID(panda::XPhoton::nIDTunes);
     panda::XPhoton::IDTune const s15(panda::XPhoton::kSpring15);
     panda::XPhoton::IDTune const s16(panda::XPhoton::kSpring16);
+    panda::XPhoton::IDTune const f17(panda::XPhoton::kFall17);
     panda::XPhoton::IDTune const gj(panda::XPhoton::kGJetsCWIso);
     panda::XPhoton::IDTune const zg(panda::XPhoton::kZGCWIso);
 
@@ -40,6 +41,10 @@ namespace panda {
       nhIsoEA[s16] = 0.0597;
       phIsoEA[s16] = 0.1210;
 
+      chIsoEA[f17] = 0.0112;
+      nhIsoEA[f17] = 0.0668;
+      phIsoEA[f17] = 0.1113;
+
       chIsoMaxEA[gj] = 0.1064;
 
       chIsoMaxEA[zg] = chIsoMaxEA[gj];
@@ -52,6 +57,10 @@ namespace panda {
       nhIsoEA[s16] = 0.0807;
       phIsoEA[s16] = 0.1107;
 
+      chIsoEA[f17] = 0.0108;
+      nhIsoEA[f17] = 0.1054;
+      phIsoEA[f17] = 0.0953;
+
       chIsoMaxEA[gj] = 0.1026;
 
       chIsoMaxEA[zg] = chIsoMaxEA[gj];
@@ -63,6 +72,10 @@ namespace panda {
       chIsoEA[s16] = 0.0306;
       nhIsoEA[s16] = 0.0629;
       phIsoEA[s16] = 0.0699;
+
+      chIsoEA[f17] = 0.0106;
+      nhIsoEA[f17] = 0.0786;
+      phIsoEA[f17] = 0.0619;
     }
     else if (absEta < 2.2) {
       nhIsoEA[s15] = 0.0360;
@@ -71,6 +84,10 @@ namespace panda {
       chIsoEA[s16] = 0.0283;
       nhIsoEA[s16] = 0.0197;
       phIsoEA[s16] = 0.1056;
+
+      chIsoEA[f17] = 0.01002;
+      nhIsoEA[f17] = 0.0233;
+      phIsoEA[f17] = 0.0837;
     }
     else if (absEta < 2.3) {
       nhIsoEA[s15] = 0.0360;
@@ -79,6 +96,10 @@ namespace panda {
       chIsoEA[s16] = 0.0254;
       nhIsoEA[s16] = 0.0184;
       phIsoEA[s16] = 0.1457;
+
+      chIsoEA[f17] = 0.0098;
+      nhIsoEA[f17] = 0.0078;
+      phIsoEA[f17] = 0.1070;
     }
     else if (absEta < 2.4) {
       nhIsoEA[s15] = 0.0462;
@@ -87,6 +108,10 @@ namespace panda {
       chIsoEA[s16] = 0.0217;
       nhIsoEA[s16] = 0.0284;
       phIsoEA[s16] = 0.1719;
+
+      chIsoEA[f17] = 0.0089;
+      nhIsoEA[f17] = 0.0028;
+      phIsoEA[f17] = 0.1212;
     }
     else {
       nhIsoEA[s15] = 0.0656;
@@ -95,6 +120,10 @@ namespace panda {
       chIsoEA[s16] = 0.0167;
       nhIsoEA[s16] = 0.0591;
       phIsoEA[s16] = 0.1998;
+
+      chIsoEA[f17] = 0.0087;
+      nhIsoEA[f17] = 0.0137;
+      phIsoEA[f17] = 0.1466;
     }
 
     chIsoEA[gj] = chIsoEA[s16];
@@ -118,6 +147,10 @@ namespace panda {
       nhIsoE2[s16] = 0.000017;
       phIsoE1[s16] = 0.0047;
 
+      nhIsoE1[f17] = 0.01512;
+      nhIsoE2[f17] = 2.259e-5;
+      phIsoE1[f17] = 0.004017;
+
       nhIsoE1[gj] = 0.0112;
       nhIsoE2[gj] = 0.000028;
       phIsoE1[gj] = 0.0043;
@@ -134,6 +167,10 @@ namespace panda {
       nhIsoE1[s16] = 0.0163;
       nhIsoE2[s16] = 0.000014;
       phIsoE1[s16] = 0.0034;
+
+      nhIsoE1[f17] = 0.0117;
+      nhIsoE2[f17] = 2.3e-5;
+      phIsoE1[f17] = 0.0037;
     }
 
     double pt(_src.pt());
@@ -141,9 +178,9 @@ namespace panda {
     double scpt(_dest.scRawPt);
     double scpt2(scpt * scpt);
 
-    double chIsoCore(_src.chIso + chIsoEA[s16] * _rho);
-    double nhIsoCore(_src.nhIso + nhIsoEA[s16] * _rho + nhIsoE1[s16] * pt + nhIsoE2[s16] * pt2);
-    double phIsoCore(_src.phIso + phIsoEA[s16] * _rho + phIsoE1[s16] * pt);
+    double chIsoCore(_src.chIso + chIsoEA[f17] * _rho);
+    double nhIsoCore(_src.nhIso + nhIsoEA[f17] * _rho + nhIsoE1[f17] * pt + nhIsoE2[f17] * pt2);
+    double phIsoCore(_src.phIso + phIsoEA[f17] * _rho + phIsoE1[f17] * pt);
 
     for (unsigned iD(0); iD != nID; ++iD) {
       _dest.chIsoX[iD] = chIsoCore - chIsoEA[iD] * _rho;

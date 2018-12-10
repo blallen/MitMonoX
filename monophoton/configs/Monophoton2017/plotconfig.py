@@ -1,26 +1,20 @@
-import sys
 import os
 import math
 
+from main.plotutil import *
+
 thisdir = os.path.dirname(os.path.realpath(__file__))
-basedir = os.path.dirname(thisdir)
-sys.path.append(basedir)
+execfile(thisdir + '/../2016Common/plotconfig_common.py')
 
-from plotconfigBase import *
-
-argv = list(sys.argv)
-sys.argv = []
 import ROOT
-black = ROOT.kBlack # need to load something from ROOT to actually import
-sys.argv = argv
 
 wiscFitPtBinning = [175., 190., 250., 400., 700., 1000.]
-# combinedFitPtBinning = [175.0, 200., 225., 250., 275., 300., 325., 350., 400., 450., 500., 600., 800., 1000.0]
-
-gghMtBinning = [0., 50., 100., 150., 200., 250., 300.]
 mtPhoMetBinning = [0., 200., 300., 400., 500., 600., 700., 800., 1000., 1200.]
+#combinedFitPtBinning = [175.0, 200., 225., 250., 275., 300., 325., 350., 400., 450., 500., 600., 800., 1000.0]
 combinedFitPtBinning = [175.0, 200., 250., 300., 400., 600., 1000.0]
 fitTemplateBinning = [-1 * (bin - 175.) for bin in reversed(combinedFitPtBinning)] + [bin - 175. for bin in combinedFitPtBinning[1:]]
+
+fitTemplateExpression = '( ( (photons.scRawPt[0] - 210.) * (photons.scRawPt[0] < 1000.) + 800. * (photons.scRawPt[0] > 1000.) ) * TMath::Sign(1, TMath::Abs(TMath::Abs(TVector2::Phi_mpi_pi(TVector2::Phi_mpi_pi(photons.phi_[0] + 0.005) - 1.570796)) - 1.570796) - 0.5) )'
 
 baseSels = {
     'photonPt175': 'photons.scRawPt[0] > 175.',
@@ -1245,6 +1239,6 @@ def getConfig(confName):
         config.addPlot('nVertex', 'N_{vertex}', 'npv', (20, 0., 40.))
 
     else:
-        config = None
+        raise RuntimeError('Unknown configuration ' + confName)
 
     return config

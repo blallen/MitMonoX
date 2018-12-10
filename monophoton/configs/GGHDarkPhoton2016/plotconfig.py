@@ -3,16 +3,9 @@ import os
 import math
 
 thisdir = os.path.dirname(os.path.realpath(__file__))
-basedir = os.path.dirname(thisdir)
-sys.path.append(basedir)
+execfile(thisdir + '/../2016Common/plotconfig_common.py')
 
-from plotconfigBase import *
-
-argv = list(sys.argv)
-sys.argv = []
 import ROOT
-black = ROOT.kBlack # need to load something from ROOT to actually import
-sys.argv = argv
 
 mtBinning = [0., 25., 50., 75., 100., 125., 150., 175., 200., 225., 250., 275., 300.]
 mtWideBinning = [0., 300., 350., 400., 450., 500., 550., 600., 650.]
@@ -27,18 +20,13 @@ baseSels = {
     'mtPhoMet300': 'photons.mt[0] < 300.',
     'minJetDPhi0.5': 't1Met.minJetDPhi > 0.5',
     'vbfVeto': 'pdijet.size == 0'
-    # 'photonDPhi0.5': 't1Met.photonDPhi > 0.5',
-    # 'jetReq': 'Sum$(jets.pt_ > 30.) > 0', 
-    # 'tauVeto': 'taus.size == 0',
-    # 'photonPtOverMet1': '(photons.scRawPt[0] / t1Met.pt) < 1.1',
-    
 }
 
 hfakeSels = 'photons.nhIsoX[0][1] < 2.725 && photons.phIsoX[0][1] < 2.571 && photons.chIsoX[0][1] > 0.441'
 
 baseSel = ' && '.join(baseSels.values())
 
-def getConfigGGH(confName):
+def getConfig(confName):
     global baseSels
 
     if 'gghg' in confName and confName not in ['gghgj', 'gghgg']:
@@ -709,6 +697,6 @@ def getConfigGGH(confName):
 
 
     else:
-        config = None
+        raise RuntimeError('Unknown configuration ' + confName)
 
     return config

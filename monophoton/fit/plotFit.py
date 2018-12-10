@@ -15,7 +15,7 @@ if commondir not in sys.path:
     sys.path.append(commondir)
 
 from datasets import allsamples
-from plotstyle import RatioCanvas
+from plotstyle import RatioCanvas, Legend
 import workspace_config as wc
 
 config = sys.argv[1]
@@ -120,7 +120,7 @@ def printBinByBin(name, hist):
     
     for iBin in range(1, hist.GetNbinsX() + 1):
         width = hist.GetBinWidth(iBin)
-        pstr += ' & $%6.2f \\pm %5.2f $' % (width * hist.GetBinContent(iBin), width * hist.GetBinError(iBin))
+        pstr += ' & $%6.1f \\pm %5.1f $' % (width * hist.GetBinContent(iBin), width * hist.GetBinError(iBin))
     
     pstr += r' \\'
 
@@ -245,19 +245,22 @@ for key in postfitDir.GetListOfKeys():
         printRegionHeader(region, prefitTotal)
     
     if pdir == 's':
-        pftitle = 'Signal+background fit'
+        pftitle = 'Sig.+bkgd. fit'
     elif pdir == 'c':
         pftitle = 'CR-only fit'
     else:
-        pftitle = 'Background-only fit'
+        pftitle = 'Bkgd. fit'
 
     canvas = RatioCanvas(lumi = lumi, name = region, prelim = False)
     canvas.legend.ncolumns = 1
-    canvas.legend.add('obs', title = 'Data', opt = 'LP', color = ROOT.kBlack, mstyle = 8, msize = 0.8)
-    canvas.legend.add('prefit', title = 'Pre-fit', opt = 'LF', color = ROOT.kRed, lstyle = ROOT.kDashed, lwidth = 2, fstyle = 3004, mstyle = 8, msize = 0.8)
+
+    # y coordinates will be adjusted later
+    resultLegend = Legend(0.35, 0., 0.7, 1.)
+    resultLegend.add('obs', title = 'Data', opt = 'ELP', color = ROOT.kBlack, mstyle = 8, msize = 0.8)
+    resultLegend.add('prefit', title = 'Pre-fit', opt = 'LF', color = ROOT.kRed, lstyle = ROOT.kDashed, lwidth = 2, fstyle = 3004, mstyle = 8, msize = 0.8)
     if postfitSub and SIMPLE:
-        canvas.legend.add('subdom', title = 'Subdominant', opt = 'F', fcolor = ROOT.kGray, fstyle = 1001)
-    canvas.legend.add('postfit', title = pftitle, opt = 'LF', color = ROOT.kBlue, lstyle = ROOT.kSolid, lwidth = 2, fstyle = 3005, mstyle = 8, msize = 0.8)
+        resultLegend.add('subdom', title = 'Subdominant', opt = 'F', fcolor = ROOT.kGray, fstyle = 1001)
+    resultLegend.add('postfit', title = pftitle, opt = 'LF', color = ROOT.kBlue, lstyle = ROOT.kSolid, lwidth = 2, fstyle = 3005, mstyle = 8, msize = 0.8)
 
     obs.SetTitle('')
     prefitTotal.SetTitle('')
@@ -265,20 +268,21 @@ for key in postfitDir.GetListOfKeys():
     if postfitSub and SIMPLE:
         postfitSub.SetTitle('')
 
-    canvas.legend.apply('obs', obs)
-    canvas.legend.apply('obs', dataHist)
-    canvas.legend.apply('prefit', prefitTotal, opt = 'L')
-    canvas.legend.apply('prefit', prefitUnc, opt = 'F')
-    canvas.legend.apply('prefit', prefitRatio, opt = 'LP')
-    canvas.legend.apply('prefit', prefitUncRatio, opt = 'F')
+    resultLegend.apply('obs', obs)
+    resultLegend.apply('obs', dataHist)
 
-    canvas.legend.apply('postfit', postfitTotal, opt = 'L')
-    canvas.legend.apply('postfit', postfitUnc, opt = 'F')
-    canvas.legend.apply('postfit', postfitRatio, opt = 'LP')
-    canvas.legend.apply('postfit', postfitUncRatio, opt = 'F')
+    resultLegend.apply('prefit', prefitTotal, opt = 'L')
+    resultLegend.apply('prefit', prefitUnc, opt = 'F')
+    resultLegend.apply('prefit', prefitRatio, opt = 'LP')
+    resultLegend.apply('prefit', prefitUncRatio, opt = 'F')
+
+    resultLegend.apply('postfit', postfitTotal, opt = 'L')
+    resultLegend.apply('postfit', postfitUnc, opt = 'F')
+    resultLegend.apply('postfit', postfitRatio, opt = 'LP')
+    resultLegend.apply('postfit', postfitUncRatio, opt = 'F')
         
     if postfitSub and SIMPLE:
-        canvas.legend.apply('subdom', postfitSub)
+        resultLegend.apply('subdom', postfitSub)
     
     # reuse dataHist for unity line in ratio pad
     dataHist.SetLineColor(ROOT.kBlack)
@@ -315,22 +319,19 @@ for key in postfitDir.GetListOfKeys():
             ghist = postfitDir.Get(region + '/' + group.name).Clone()
             ghist.SetTitle('')
 
-            printBinByBin(group.name, ghist)
-
             if len(groupHists):
                 # we just overlay bunch of histograms instead of using THStack
                 ghist.Add(groupHists[-1])
 
             groupHists.append(ghist)
 
-
         if pdir == 's':
             try:
                 shist = postfitDir.Get(region + '/total_signal').Clone()
-                canvas.legend.add('signal', title = 'Signal', opt = 'F', fcolor = ROOT.kBlack, fstyle = 3002)
+                resultLegend.add('signal', title = 'Signal', opt = 'F', fcolor = ROOT.kBlack, fstyle = 3002)
 
                 printBinByBin('signal', shist)
-                canvas.legend.apply('signal', shist)
+                resultLegend.apply('signal', shist)
                 shist.SetTitle('')
 
                 if len(groupHists):
@@ -343,8 +344,6 @@ for key in postfitDir.GetListOfKeys():
                 print region + ' region has no signal processes.'
                 pass
 
-        printRegionFooter(region, lumi, postfitTotal, dataHist)
-
         # merge groups
         # component groups must be adjacently defined in plotconfig
         groupMerge = []
@@ -353,7 +352,7 @@ for key in postfitDir.GetListOfKeys():
             if 'monoph' in region or 'horizontal' in region or 'vertical' in region:
                 groupMerge = [
                     ('other', ('vvg', 'top', 'gg', 'wjets', 'gjets'), 'Other SM', ROOT.TColor.GetColor(0xff, 0xbb, 0x55)),
-                    ('noncol', ('halo', 'spike'), 'Non-collision', ROOT.TColor.GetColor(0xaa, 0xaa, 0xaa))
+                    ('noncol', ('halo', 'spike'), 'Noncollision', ROOT.TColor.GetColor(0xaa, 0xaa, 0xaa))
                 ]
             elif 'mono' in region:
                 groupMerge = [
@@ -377,8 +376,6 @@ for key in postfitDir.GetListOfKeys():
                 name = group.name
                 title = group.title
                 color = group.color
-                if name == 'hfake':
-                    title = 'Hadron fakes'
 
             # just to filter out merged groups that are already added (we only use the first = all merged histogram)
             if name in added:
@@ -386,20 +383,36 @@ for key in postfitDir.GetListOfKeys():
 
             added.add(name)
 
+            if 'Hadronic' in title:
+                title = title.replace('Hadronic', 'Hadron')
+
             canvas.legend.add(name, title = title, opt= 'F', fcolor = color, fstyle = 1001)
             canvas.legend.apply(name, ghist)
 
             iG = canvas.addHistogram(ghist)
             groupList.append(iG)
 
+        for iG in groupList:
+            ghist = canvas._histograms[iG].obj.Clone()
+
+            if iG+1 == len(canvas._histograms):
+                printBinByBin(ghist.GetName(), ghist)
+                continue
+
+            shist = canvas._histograms[iG+1].obj.Clone()
+
+            ghist.Add(shist, -1.)
+            printBinByBin(ghist.GetName(), ghist)
+
+        printRegionFooter(region, lumi, postfitTotal, dataHist)
             # print name, ghist.Integral()
 
         if pdir != 's':
             try:
                 shist = mlfit.Get('shapes_prefit').Get(region + '/total_signal').Clone()
-                canvas.legend.add('signal', title = 'Signal', opt = 'L', color = ROOT.kMagenta, lstyle = ROOT.kSolid, lwidth = 3)
+                resultLegend.add('signal', title = 'Signal', opt = 'L', color = ROOT.kMagenta, lstyle = ROOT.kSolid, lwidth = 3)
 
-                canvas.legend.apply('signal', shist)
+                resultLegend.apply('signal', shist)
                 shist.SetTitle('')
 
                 iS = canvas.addHistogram(shist)
@@ -413,18 +426,34 @@ for key in postfitDir.GetListOfKeys():
 
     canvas.rlimits = (0.0, 2.5)
     if 'monoph' in region or 'horizontal' in region or 'vertical' in region:
-        canvas.ylimits = (0.0003, 200.)
+        canvas.ylimits = (0.0003, 100.)
+        rlabel = region
     elif 'mono' in region:
-        canvas.ylimits = (0.0003, 20.)
+        canvas.ylimits = (0.0003, 60.)
+        if 'mu' in region:
+            rlabel = '#mu#gamma'
+        elif 'el' in region:
+            rlabel = 'e#gamma'
     elif 'di' in region:
-        canvas.ylimits = (0.0003, 5.)
+        canvas.ylimits = (0.0003, 8.)
+        if 'mu' in region:
+            rlabel = '#mu#mu#gamma'
+        elif 'el' in region:
+            rlabel = 'ee#gamma'
 
-    canvas.legend.setPosition(0.65, 0.92 - 0.04 * len(canvas.legend.entries), 0.9, 0.92)
+    canvas.cmsPave.SetTextSize(0.04)
+    canvas.addText(rlabel, 0.185, 0.82, 0.35, 0.86, size = 0.04, align = 12)
+
+    resultLegend.setPosition(0.4, 0.88 - 0.04 * len(resultLegend.entries), 0.63, 0.88)
+    canvas.legend.setPosition(0.63, 0.88 - 0.04 * len(canvas.legend.entries), 0.9, 0.88)
+
+    resultLegend.SetTextSize(0.04)
+    canvas.legend.SetTextSize(0.04)
 
     if config == 'monoph':
-        canvas.xtitle = 'E_{T}^{#gamma} (GeV)'
+        canvas.xtitle = 'E_{T}^{#gamma} [GeV]'
     else:
-        canvas.xtitle = 'M_{T}(#gamma, E_{T}^{miss}) (GeV)'
+        canvas.xtitle = 'M_{T}(#gamma, E_{T}^{miss}) [GeV]'
     canvas.ytitle = 'Events / GeV'
     canvas.rtitle = 'Data / Pred.'
 
@@ -437,6 +466,9 @@ for key in postfitDir.GetListOfKeys():
     elif pdir == 's':
         outname = 'splusb_' + region
 
+    resultLegend.construct()
+    canvas.addObject(resultLegend.legend, clone = False)
+
     canvas.Update(hList = hList, rList = [iLine, iPreUncRatio, iPostUncRatio, iPreRatio, iPostRatio], logy = True)
 
     zeroBins = []
@@ -445,7 +477,7 @@ for key in postfitDir.GetListOfKeys():
             zeroBins.append(iBin)
 
     if len(zeroBins) != 0:
-        # OK we need to manually edit the ratio histograms after all the acrobat of makxoing inverted ratios..
+        # OK we need to manually edit the ratio histograms after all the acrobat of making inverted ratios..
         for prim in canvas.ratioPad.GetListOfPrimitives():
             name = prim.GetName().replace('ratio_', '')
             if name not in ['prefitUncRatio', 'postfitUncRatio', 'prefitRatio', 'postfitRatio']:

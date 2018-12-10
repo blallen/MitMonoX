@@ -16,7 +16,13 @@ rm -f $CATALOGDIR/*
 i=0
 ls $DIR | while read line
 do
-  echo $(printf %04d $(($i/$FILESET_SIZE))) $line 1 1 1 1 1 1 >> $CATALOGDIR/Files
+  N=$(root -b -q -l $MONOPHDIR/misc/num_events.C'("'$DIR/$line'")' | tail -n 1)
+  if [ $? -ne 0 ]
+  then
+    echo "File $line corrupted"
+    continue
+  fi
+  echo $(printf %04d $(($i/$FILESET_SIZE))) $line $N $N 1 1 1 1 >> $CATALOGDIR/Files
   i=$(($i+1))
 done
 

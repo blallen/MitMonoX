@@ -1,14 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import re
 import os
 import math
 import fnmatch
 import subprocess
-import config
+import importlib
 
-defaultList = os.path.dirname(os.path.realpath(__file__)) + '/data/datasets' + config.year + '.csv'
-catalogDir = '/home/cmsprod/catalog/t2mit'
+import config
 
 def expandBrace(pattern):
     """Expand a string with a brace-enclosed substitution pattern."""
@@ -89,9 +88,10 @@ def braceContract(strings):
 
 
 class SampleDef(object):
-    def __init__(self, name, title = '', book = '', fullname = '', additionalDatasets = [], crosssection = 0., nevents = 0, sumw = 0., lumi = 0., data = False, comments = '', custom = {}):
+    def __init__(self, name, title = '', catalog = ('', ''), book = '', fullname = '', additionalDatasets = [], crosssection = 0., nevents = 0, sumw = 0., lumi = 0., generator = '', comments = '', custom = {}):
         self.name = name
         self.title = title
+        self.catalog = catalog
         self.book = book
         self.fullname = fullname
         self.crosssection = crosssection
@@ -101,7 +101,8 @@ class SampleDef(object):
         else:
             self.sumw = sumw
         self.lumi = lumi
-        self.data = data
+        self.generator = generator
+        self.data = (generator == 'lhc')
         self.comments = comments
         self.custom = custom
 
@@ -119,9 +120,9 @@ class SampleDef(object):
         self._downloadable = {}
 
     def clone(self):
-        return SampleDef(self.name, title = self.title, book = self.book, fullname = self.fullname,
+        return SampleDef(self.name, title = self.title, catalog = self.catalog, book = self.book, fullname = self.fullname,
             additionalDatasets = self.datasetNames, crosssection = self.crosssection, nevents = self.nevents,
-            sumw = self.sumw, lumi = self.lumi, data = self.data, comments = self.comments, custom = dict(self.custom.items()))
+            sumw = self.sumw, lumi = self.lumi, generator = self.generator, comments = self.comments, custom = dict(self.custom.items()))
 
     def addDataset(self, name):
         if name in self.datasetNames:
@@ -139,6 +140,7 @@ class SampleDef(object):
     def dump(self, effectiveLumi = False):
         print 'name =', self.name
         print 'title =', self.title
+        print 'catalog = %s (%s)' % self.catalog
         print 'book =', self.book
         print 'fullname =', self.fullname
         print 'datasetNames =', self.datasetNames
@@ -148,7 +150,7 @@ class SampleDef(object):
         print 'sumw =', self.sumw
         if self.lumi > 0. or effectiveLumi:
             print 'lumi =', self.effectiveLumi(), 'pb'
-        print 'data =', self.data
+        print 'generator =', self.generator
         print 'comments = "' + self.comments + '"'
         print 'filesets =', self.filesets()
 
@@ -182,8 +184,8 @@ class SampleDef(object):
         else:
             comments = ''
             
-        lineTuple = (self.name, title, xsecstr, self.nevents, sumwstr, self.book, fullnames, comments)
-        return '%-16s %-35s %-16s %-10d %-20s %-12s %s%s' % lineTuple
+        lineTuple = (self.name, title, xsecstr, self.nevents, sumwstr, self.generator, self.catalog[0], self.book, fullnames, comments)
+        return '%-16s %-35s %-16s %-10d %-20s %-9s %-8s %-12s %s%s' % lineTuple
 
     def _updateSumw(self):
         if self._sumw2 > 0.:
@@ -198,11 +200,16 @@ class SampleDef(object):
 
         error = False
         for dataset in self.datasetNames:
-            if 'amcatnlo' in dataset or 'Sherpa' in dataset:
+            if self.generator in ('amcatnlo', 'sherpa', 'powheg'):
                 for fileset, basenames in self._basenames[dataset].items():
                     for basename in basenames:
                         path = self._directories[dataset] + '/' + basename
-                        source = ROOT.TFile.Open(path)
+                        if os.path.exists(path):
+                            source = ROOT.TFile.Open(path)
+                        else:
+                            path = path.replace('/mnt/hadoop/cms', 'root://xrootd.cmsaf.mit.edu/')
+                            source = ROOT.TFile.Open(path)
+
                         if not source:
                             error = True
                             continue
@@ -221,22 +228,12 @@ class SampleDef(object):
 
                         source.Close()
             else:
-                check = subprocess.Popen(
-                    ['numberOfEvents.py', '--book', self.book, '--dataset', dataset],
-                    stdout = subprocess.PIPE, stderr = subprocess.PIPE
-                    )
-                eventsout = check.communicate()[0].strip()
-                rc = check.returncode
-
-                if rc > 0:
-                    print 'numberOfEvents.py failed for ' + self.book + '/' + dataset
-                    error = True
-                else:
-                    for line in eventsout.split('\n'):
-                        if 'Total number of events:' not in line:
-                            continue
-
-                        nevents = int(line.strip().split(" ")[-1])
+                # Originally we were reading the ROOT files to get the actual event count
+                # If we want to instead rely on numbers from production, we can simply
+                # read the catalog
+                with open(self.catalog[1] + '/' + self.book + '/' + dataset + '/Files') as fileList:
+                    for line in fileList:
+                        nevents = int(line.strip().split()[2])
                         self.nevents += nevents
                         self.sumw += nevents
                         self._sumw2 += math.pow(nevents, 2.)
@@ -252,7 +249,7 @@ class SampleDef(object):
 
             self._basenames[dataset] = {}
 
-            with open(catalogDir + '/' + self.book + '/' + dataset + '/Filesets') as filesetList:
+            with open(self.catalog[1] + '/' + self.book + '/' + dataset + '/Filesets') as filesetList:
                 for line in filesetList:
                     fileset, xrdpath = line.split()[:2]
                     fileset += dsuffix
@@ -263,7 +260,7 @@ class SampleDef(object):
                         self._directories[dataset] = xrdpath.replace('root://xrootd.cmsaf.mit.edu/', '/mnt/hadoop/cms').replace('root://t3serv006.mit.edu/', '/mnt/hadoop')
                         self._downloadable[dataset] = self._directories[dataset].startswith('/mnt/hadoop/cms/store/user/paus')
     
-            with open(catalogDir + '/' + self.book + '/' + dataset + '/Files') as fileList:
+            with open(self.catalog[1] + '/' + self.book + '/' + dataset + '/Files') as fileList:
                 for line in fileList:
                     fileset, fname = line.split()[:2]
                     fileset += dsuffix
@@ -291,16 +288,6 @@ class SampleDef(object):
                 print 'sumw2 is zero'
                 return 0.
 
-    def makeFilename(self, dataset, line):
-        f = line.split("/")
-        
-        if len(f) > 2:
-            filename = '/'.join(f[-2:])
-        else:
-            filename = dataset + '/' + line
-
-        return filename
-
     def checkT2(self, dataset):
         filesT2 = set()
 
@@ -314,7 +301,7 @@ class SampleDef(object):
             if not '.root' in line:
                 continue
 
-            filename = self.makeFilename(dataset, line)
+            filename = dataset + '/' + os.path.basename(line)
             filesT2.add(filename)
 
         return filesT2
@@ -322,30 +309,28 @@ class SampleDef(object):
     def checkT3(self, dataset):
         filesT3 = set()
 
-        listT3 = subprocess.Popen(
-            ['ls', '/mnt/hadoop/cms/store/user/paus/' + self.book + '/' + dataset, '|',  'grep', 'root'],
-            stdout = subprocess.PIPE, stderr = subprocess.PIPE
-            )
-        rawT3 = listT3.communicate()[0].strip()
+        if not os.path.isdir(self._directories[dataset]):
+            return filesT3
 
-        for line in rawT3.split("\n"):
-            if not '.root' in line:
+        for fname in os.listdir(self._directories[dataset]):
+            if not fname.endswith('.root'):
                 continue
 
-            filename = self.makeFilename(dataset, line)
-            path = '/mnt/hadoop/cms/store/user/paus/'+ self.book + '/' + filename
+            path = self._directories[dataset] + '/' + fname
             if os.stat(path).st_size == 0:
-                # os.remove(path) ## need permission
                 continue
 
-            filesT3.add(filename)
+            filesT3.add(dataset + '/' + fname)
 
         return filesT3
 
     def download(self, filesets = []):
         self._readCatalogs()
 
-        for dataset in self.datasetNames:                
+        for dataset in self.datasetNames:
+            if not self._downloadable[dataset]:
+                continue
+
             filesT3 = self.checkT3(dataset)
             filesT2 = self.checkT2(dataset)
 
@@ -408,7 +393,8 @@ class SampleDef(object):
 class SampleDefList(object):
     def __init__(self, samples = [], listpath = ''):
         self.samples = list(samples)
-        self._commentLines = {} # {path: [(dataset before, comment)]} to reproduce comment lines from the source
+        self._catalogs = {} # {name: path}
+        self._lineInsertions = {} # {path: [(dataset before, comment)]} to reproduce comment lines from the source
         self._sample_source = {} # {path: set(sample name)}
 
         if listpath:
@@ -427,7 +413,7 @@ class SampleDefList(object):
             raise KeyError(key + ' not defined')
 
     def _load(self, listpath):
-        self._commentLines[listpath] = []
+        self._lineInsertions[listpath] = []
         self._sample_source[listpath] = set()
 
         with open(listpath) as dsSource:
@@ -436,29 +422,38 @@ class SampleDefList(object):
                 line = line.strip()
                 
                 if not line or line.startswith('#'):
-                    self._commentLines[listpath].append((name, line))
+                    self._lineInsertions[listpath].append((name, line))
                     continue
 
-                matches = re.match('<(.*)>', line)
-                if matches:
-                    # use commentLines for imports too
-                    self._commentLines[listpath].append((name, line))
+                if line.startswith('%'):
+                    self._lineInsertions[listpath].append((name, line))
+                    words = line[1:].split()
 
-                    # importing another list
-                    path = matches.group(1)
-                    if path[0] != '/':
-                        path = os.path.dirname(os.path.realpath(listpath)) + '/' + path
+                    if words[0] == 'catalog':
+                        cname = words[1]
+                        path = words[2]
+                        if path[0] != '/':
+                            path = os.path.dirname(os.path.realpath(listpath)) + '/' + path
+
+                        self._catalogs[cname] = path
+
+                    elif words[0] == 'import':
+                        path = words[1]
+                        if path[0] != '/':
+                            path = os.path.dirname(os.path.realpath(listpath)) + '/' + path
                     
-                    self._load(path)
+                        self._load(path)
+
                     continue
-        
-                matches = re.match('([^\s]+)\s+"(.*)"\s+([0-9e.+-]+)\s+([0-9]+)\s+([0-9e.+-]+)\s+([^\s]+)\s+((?:[^\s#]+\s*)+)(#.*|)$', line)
+
+                #                   name       title    xsec           nevt       sumw           generator  catalog    book       fullnames        comments
+                matches = re.match('([^\s]+)\s+"(.*)"\s+([0-9e.+-]+)\s+([0-9]+)\s+([0-9e.+-]+)\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s+((?:[^\s#]+\s*)+)(#.*|)$', line)
                 if not matches:
                     print 'Ill-formed line in ' + listpath
                     print line
                     continue
         
-                name, title, crosssection, nevents, sumw, book, fullnames, comments = [matches.group(i) for i in range(1, 9)]
+                name, title, crosssection, nevents, sumw, generator, catalog, book, fullnames, comments = [matches.group(i) for i in range(1, 11)]
                 fullnames = fullnames.split()
 
                 self._sample_source[listpath].add(name)
@@ -468,21 +463,23 @@ class SampleDefList(object):
                         fullnames.remove(pattern)
                         fullnames.extend(expandBrace(pattern))
 
-                kwd = {'title': title, 'book': book, 'fullname': fullnames[0], 'additionalDatasets': fullnames[1:], 'nevents': int(nevents), 'comments': comments.lstrip(' #')}
+                catarg = (catalog, self._catalogs[catalog])
+
+                kwd = {'title': title, 'generator': generator, 'catalog': catarg, 'book': book, 'fullname': fullnames[0], 'additionalDatasets': fullnames[1:], 'nevents': int(nevents), 'comments': comments.lstrip(' #')}
 
                 if sumw == '-':
-                    kwd.update({'lumi': float(crosssection), 'data': True})
+                    kwd.update({'lumi': float(crosssection)})
                 else:
                     kwd.update({'crosssection': float(crosssection), 'sumw': float(sumw)})
 
                 self.samples.append(SampleDef(name, **kwd))
 
     def save(self, listpath):
-        commentLines = self._commentLines[listpath]
+        insertions = self._lineInsertions[listpath]
 
         def insert_comment(out, iC, name):
-            while iC != len(commentLines) and commentLines[iC][0] == name:
-                line = commentLines[iC][1]
+            while iC != len(insertions) and insertions[iC][0] == name:
+                line = insertions[iC][1]
                 out.write(line + '\n')
                 if line.startswith('<'):
                     path = line[1:-1]
@@ -553,6 +550,7 @@ class SampleDefList(object):
 
         return sorted(list(set(samples)), key = lambda s: s.name)
 
+params = importlib.import_module('configs.' + config.config + '.params')
 
 if __name__ == '__main__':
     import sys
@@ -565,14 +563,11 @@ dump DATASETS: Dump information of DATASETS in CSV form.
 recalculate DATASETS: Recalculate nentries and sumw for DATASETS.
 add INFO: Add a new dataset.'''
     argParser.add_argument('command', nargs = '+', help = commandHelp)
-    argParser.add_argument('--catalog', '-c', metavar = 'PATH', dest = 'catalog', default = catalogDir, help = 'Source file catalog.')
-    argParser.add_argument('--list-path', '-s', metavar = 'PATH', dest = 'listPath', default = defaultList, help = 'CSV file to load data from.')
+    argParser.add_argument('--list-path', '-s', metavar = 'PATH', dest = 'listPath', default = params.datasetlist, help = 'CSV file to load data from.')
     argParser.add_argument('--save', '-o', metavar = 'PATH', dest = 'outPath', nargs = '?', const = '', help = 'Save updated content to CSV file (no argument: save to original CSV).')
 
     args = argParser.parse_args()
     sys.argv = []
-
-    catalogDir = args.catalog
 
     import ROOT
 
@@ -685,4 +680,4 @@ add INFO: Add a new dataset.'''
         samples.save(args.outPath)
 
 else: # when importing from another python script
-    allsamples = SampleDefList(listpath = defaultList)
+    allsamples = SampleDefList(listpath = params.datasetlist)

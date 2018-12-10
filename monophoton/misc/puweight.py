@@ -1,12 +1,9 @@
+#!/usr/bin/env python
+
 import sys
 import os
+import importlib
 import ROOT
-
-thisdir = os.path.dirname(os.path.realpath(__file__))
-basedir = os.path.dirname(thisdir)
-sys.path.append(basedir)
-from datasets import allsamples
-import config
 
 mcConfs = [
     ('2016_25ns_SpringMC_PUScenarioV1_PoissonOOTPU', 'PUSpring16'),
@@ -21,28 +18,30 @@ if not dataSource:
 outputFile = ROOT.TFile.Open(sys.argv[1], 'recreate')
 
 dataDist = dataSource.Get('pileup').Clone('data')
-dataDist.Sumw2()
 dataDist.Scale(1. / dataDist.GetSumOfWeights())
 
 dataDist.Write()
 
 for mcScenario, scenarioName in mcConfs:
-    # not the most proper way to import a module from a string, but who cares
-    exec('from SimGeneral.MixingModule.mix_' + mcScenario + '_cfi import mix')
+    mix = importlib.import_module('SimGeneral.MixingModule.mix_' + mcScenario + '_cfi').mix
     npvs = mix.input.nbPileupEvents.probFunctionVariable.value() # list of integers
-    probs = mix.input.nbPileupEvents.probValue.value() # list of integers
-    
-    mcProb = dict(zip(npvs, probs))
+    probs = mix.input.nbPileupEvents.probValue.value() # list of floats
+
+    gr = ROOT.TGraph(len(npvs) + 1)
+    for i in range(len(npvs)):
+        gr.SetPoint(i, float(npvs[i]), probs[i])
+    gr.SetPoint(len(npvs), npvs[-1] + 1., 0.)
     
     mcDist = ROOT.TH1D(scenarioName, '', dataDist.GetNbinsX(), 0., dataDist.GetXaxis().GetXmax())
     mcDist.Sumw2()
     
     for bin in range(1, mcDist.GetNbinsX() + 1):
-        npv = int(mcDist.GetXaxis().GetBinCenter(bin))
-        try:
-            mcDist.SetBinContent(bin, mcProb[npv])
-        except KeyError:
-            pass
+        # assuming bin boundaries are always integers (i.e. there is no graph kink within the bin), we can Eval the graph and compute the area of the trapezoid
+        xmin = mcDist.GetXaxis().GetBinLowEdge(bin)
+        xmax = mcDist.GetXaxis().GetBinUpEdge(bin)
+        ymin = gr.Eval(xmin)
+        ymax = gr.Eval(xmax)
+        mcDist.SetBinContent(bin, (ymin + ymax) * (xmax - xmin) * 0.5)
     
     mcDist.Scale(1. / mcDist.GetSumOfWeights())
     

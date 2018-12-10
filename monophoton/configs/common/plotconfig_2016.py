@@ -2,12 +2,7 @@ import sys
 import os
 import math
 
-thisdir = os.path.dirname(os.path.realpath(__file__))
-basedir = os.path.dirname(thisdir)
-sys.path.append(basedir)
-
 import config as globalConf
-from main.plotutil import *
 
 argv = list(sys.argv)
 sys.argv = []

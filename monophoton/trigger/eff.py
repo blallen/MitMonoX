@@ -4,24 +4,24 @@
 import os
 import sys
 import array
+import importlib
 
 import ROOT
 ROOT.gROOT.SetBatch(True)
 ROOT.gErrorIgnoreLevel = ROOT.kWarning
 
-thisdir = os.path.dirname(os.path.realpath(__file__))
-basedir = os.path.dirname(thisdir)
-sys.path.append(basedir)
 from datasets import allsamples
 from plotstyle import SimpleCanvas
 import config
 import utils
 
-from trigger.confs import measurements, confs, fitconfs
+tconf = importlib.import_module('configs.' + config.config + '.trigger')
+measurements = tconf.measurements
+confs = tconf.confs
+fitconfs = tconf.fitconfs
 
 ROOT.gStyle.SetNdivisions(510, 'X')
-
-ROOT.gROOT.LoadMacro(basedir + '/../common/MultiDraw.cc+')
+ROOT.gSystem.Load(config.libmultidraw)
 
 REPLOT = False
 FITEFFICIENCY = False
@@ -31,7 +31,7 @@ if len(sys.argv) > 1:
 else:
     omnames = measurements.keys()
 
-outName = 'trigger'
+outName = config.plotDir + '/trigger'
 outDir = config.histDir + '/trigger'
 
 if not REPLOT:
@@ -43,16 +43,22 @@ if not REPLOT:
 
         snames, region, basesel, colname = measurements[(oname, mname)]
 
+        try:
+            os.makedirs(outDir)
+        except OSError:
+            pass
+
         outputFile = ROOT.TFile.Open(outDir + '/trigger_efficiency_%s_%s.root' % (oname, mname), 'recreate')
 
         # fill the histograms
-        plotter = ROOT.MultiDraw()
+        plotter = ROOT.multidraw.MultiDraw()
         plotter.setWeightBranch('')
+        plotter.setInputMultiplexing(4)
     
         for sample in allsamples.getmany(snames):
             plotter.addInputPath(utils.getSkimPath(sample.name, region))
     
-        plotter.setBaseSelection(basesel)
+        plotter.setFilter(basesel)
     
         # make an empty histogram for each (trigger, variable) combination
         histograms = []
@@ -66,7 +72,7 @@ if not REPLOT:
             passdef = passdef.format(col = colname)
             commonsel = commonsel.format(col = colname)
 
-            for vname, (vtitle, vexpr, denomdef, binning),  in variables.items():
+            for vname, (vtitle, vexpr, denomdef, binning) in variables.items():
                 vexpr = vexpr.format(col = colname)
                 denomdef = denomdef.format(col = colname)
 
@@ -85,16 +91,19 @@ if not REPLOT:
                     sels.append(commonsel)
                 if denomdef:
                     sels.append(denomdef)
+
+                if len(sels):
+                    cutName = tname + '_' + vname
+                    plotter.addCut(cutName, ' && '.join(sels))
+                else:
+                    cutName = ''
     
-                plotter.addPlot(hbase, vexpr, ' && '.join(sels), True)
-
-                sels.append(passdef)
-
-                plotter.addPlot(hpass, vexpr, ' && '.join(sels), True)
+                plotter.addPlot(hbase, vexpr, cutName)
+                plotter.addPlot(hpass, vexpr, cutName, passdef)
     
                 template.Delete()
     
-        plotter.fillPlots()
+        plotter.execute()
     
         # make efficiency graphs and save
         for tname, (_, _, _, variables) in confs[oname].items():

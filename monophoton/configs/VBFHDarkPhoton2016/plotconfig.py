@@ -3,18 +3,11 @@ import os
 import math
 
 thisdir = os.path.dirname(os.path.realpath(__file__))
-basedir = os.path.dirname(thisdir)
-sys.path.append(basedir)
+execfile(thisdir + '/../2016Common/plotconfig_common.py')
 
-from plotconfigBase import *
-
-argv = list(sys.argv)
-sys.argv = []
 import ROOT
-black = ROOT.kBlack # need to load something from ROOT to actually import
-sys.argv = argv
 
-def getConfigVBF(confName):
+def getConfig(confName):
 
     if confName == 'vbfg' or confName == 'vbfglo':
         allsamples['sph-16b-m'].lumi = 4778.

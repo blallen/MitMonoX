@@ -39,7 +39,10 @@ if not os.path.isdir(args.logdir):
 if args.edm:
     keynames = set(['MetaData', 'ParameterSets', 'Parentage', 'Events', 'LuminosityBlocks', 'Runs'])
 else:
-    keynames = set(['ElectronTriggerObject', 'MuonTriggerObject', 'PhotonTriggerObject', 'RecoilCategory', 'events', 'runs', 'lumiSummary', 'hlt', 'hNPVReco', 'hNPVTrue', 'hSumW', 'eventcounter'])
+    # version <= 011
+    #keynames = set(['ElectronTriggerObject', 'MuonTriggerObject', 'PhotonTriggerObject', 'RecoilCategory', 'events', 'runs', 'lumiSummary', 'hlt', 'hNPVReco', 'hNPVTrue', 'hSumW', 'eventcounter'])
+    # version 012
+    keynames = set(['RecoilCategory', 'events', 'runs', 'lumiSummary', 'hlt', 'hNPVReco', 'hNPVTrue', 'hSumW', 'eventcounter'])
 
 def rm(infile, path = ''):
     if not path:
@@ -117,7 +120,7 @@ def writepanda(inpaths, outfname):
         chain.Add(inpath)
 
     output.cd()
-    events = chain.CloneTree()
+    events = chain.CopyTree('TMath::Finite(weight)')
     events.Write()
     chain = None
 
@@ -227,9 +230,6 @@ class SynchDB(object):
 iout = 0
 
 while True:
-    if iout == args.nout:
-        break
-
     while True:
         outbase = ''.join(random.sample(string.hexdigits, 16)) + '.root'
         outname = args.outdir + '/' + outbase
@@ -249,11 +249,16 @@ while True:
             db.connect()
     
             if os.path.exists(inpath) and os.stat(inpath).st_mtime < time.time() - 300:
-                db.execute('SELECT COUNT(*) FROM `inputs` WHERE `path` = %s', inpath)
-                if db.cursor.fetchall()[0][0] == 0:
-                    db.execute('INSERT INTO `inputs` VALUES (%s, %s)', inpath, outname)
-                    do_open = True
-    
+                db.execute('SELECT COUNT(*) FROM `logs` WHERE `path` = %s', inpath)
+                if db.cursor.fetchall()[0][0] != 0:
+                    print inpath, 'appears in the log table.'
+                    rm(None, inpath)
+                else:
+                    db.execute('SELECT COUNT(*) FROM `inputs` WHERE `path` = %s', inpath)
+                    if db.cursor.fetchall()[0][0] == 0:
+                        db.execute('INSERT INTO `inputs` VALUES (%s, %s)', inpath, outname)
+                        do_open = True
+   
             db.close()
     
             if not do_open:
@@ -307,7 +312,7 @@ while True:
         if len(inpaths) == 0:
             break
 
-        elif len(inpaths) < args.nmerge / 2:
+        elif len(inpaths) < args.nmerge:
             print 'Too few files to merge. Sleeping for 5 minutes.'
             time.sleep(300)
             iout += 1
@@ -358,3 +363,6 @@ while True:
             os.unlink('/tmp/' + outbase)
 
     iout += 1
+
+    if iout == args.nout:
+        break

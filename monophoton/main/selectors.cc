@@ -10,6 +10,8 @@
 // EventSelectorBase
 //--------------------------------------------------------------------
 
+std::mutex EventSelectorBase::mutex;
+
 EventSelectorBase::~EventSelectorBase()
 {
   if (ownOperators_) {
@@ -21,6 +23,9 @@ EventSelectorBase::~EventSelectorBase()
 void
 EventSelectorBase::addOperator(Operator* _op, unsigned _idx/* = -1*/)
 {
+  if (!dynamic_cast<MonophotonOperator*>(_op) && !dynamic_cast<BaseOperator*>(_op))
+    throw std::runtime_error(TString::Format("Cannot add operator %s to EventSelector", _op->name()).Data());
+
   if (_idx >= operators_.size())
     operators_.push_back(_op);
   else
@@ -94,7 +99,8 @@ EventSelectorBase::initialize(char const* _outputPath, panda::EventMonophoton& _
     op->addInputBranch(_blist);
     op->addBranches(*skimOut_);
     op->initialize(_inEvent);
-    op->registerCut(*cutsOut_);
+    if (dynamic_cast<Cut*>(op))
+      static_cast<Cut*>(op)->registerCut(*cutsOut_);
   }
 
   if (printLevel_ > 0)
@@ -141,9 +147,9 @@ EventSelector::setupSkim_(panda::EventMonophoton& _inEvent, bool _isMC)
 {
   // Branches to be directly copied from the input tree
   // Add a prepareFill line below any time a collection branch is added
-  panda::utils::BranchList blist{{"runNumber", "lumiNumber", "eventNumber", "npv", "rho", "vertices", "pfCandidates"}};
+  panda::utils::BranchList blist{{"runNumber", "lumiNumber", "eventNumber", "npv", "rho", "vertices"}};
   if (_isMC)
-    blist += {"partons", "genParticles", "genVertex"}; // , "genMet"};
+    blist += {"npvTrue", "partons", "genParticles", "genVertex"}; // , "genMet"};
   else
     blist += {"metFilters"};
 
@@ -160,7 +166,7 @@ void
 EventSelector::prepareFill_(panda::EventMonophoton& _inEvent)
 {
   _inEvent.vertices.prepareFill(*skimOut_);
-  _inEvent.pfCandidates.prepareFill(*skimOut_);
+  // _inEvent.pfCandidates.prepareFill(*skimOut_);
   _inEvent.partons.prepareFill(*skimOut_);
   _inEvent.genParticles.prepareFill(*skimOut_);
 }
@@ -191,16 +197,23 @@ EventSelector::selectEvent(panda::EventMonophoton& _event)
       timers_[iO] += Clock::now() - start;
   }
 
+  cutsOut_->Fill();
+
   if (pass) {
     // IMPORTATNT
     // We link these skimOut branches to the input event. Need to refresh the addresses in case
     // collections are resized.
+
+    // It would be clearer / more elegant to factor this operation out to a serial part, have
+    // selectEvent take an EventMonophoton const& as an argument, and return pass, but cases
+    // like ZeeEventSelector doesn't allow an easy factorization.
+
+    std::lock_guard<std::mutex> lock(EventSelectorBase::mutex);
+
     prepareFill_(_event);
 
     outEvent_.fill(*skimOut_);
   }
-
-  cutsOut_->Fill();
 }
 
 //--------------------------------------------------------------------
@@ -271,13 +284,15 @@ ZeeEventSelector::selectEvent(panda::EventMonophoton& _event)
         ++iOPair;
       }
 
+      cutsOut_->Fill();
+
       if (pass) {
+        std::lock_guard<std::mutex> lock(EventSelectorBase::mutex);
+
         prepareFill_(_event);
           
         outEvent_.fill(*skimOut_);
       }
-
-      cutsOut_->Fill();
     }
   }
   else {
@@ -300,13 +315,15 @@ ZeeEventSelector::selectEvent(panda::EventMonophoton& _event)
       ++iO;
     }
 
+    cutsOut_->Fill();
+
     if (pass) {
+      std::lock_guard<std::mutex> lock(EventSelectorBase::mutex);
+
       prepareFill_(_event);
           
       outEvent_.fill(*skimOut_);
     }
-
-    cutsOut_->Fill();
   }
 }
 
@@ -416,6 +433,18 @@ SmearingSelector::selectEvent(panda::EventMonophoton& _event)
 #include "PandaTree/Objects/interface/EventTP2M.h"
 
 void
+TagAndProbeSelector::addOperator(Operator* _op, unsigned _idx/* = -1*/)
+{
+  if (!dynamic_cast<TPOperator*>(_op) && !dynamic_cast<BaseOperator*>(_op))
+    throw std::runtime_error(TString::Format("Cannot add operator %s to TagAndProbeSelector", _op->name()).Data());
+
+  if (_idx >= operators_.size())
+    operators_.push_back(_op);
+  else
+    operators_.insert(operators_.begin() + _idx, _op);
+}
+
+void
 TagAndProbeSelector::setupSkim_(panda::EventMonophoton& _inEvent, bool _isMC)
 {
   switch (outType_) {
@@ -490,8 +519,10 @@ TagAndProbeSelector::selectEvent(panda::EventMonophoton& _event)
       timers_[iO] += Clock::now() - start;
   }
 
-  if (pass)
-    outEvent_->fill(*skimOut_);
-
   cutsOut_->Fill();
+
+  if (pass) {
+    std::lock_guard<std::mutex> lock(EventSelectorBase::mutex);
+    outEvent_->fill(*skimOut_);
+  }
 }
