@@ -545,6 +545,35 @@ def gghmm(sample, rname):
 
     return selector
 
+def gghgLowPt(sample, rname):
+    """
+    Low-pt control region using a prescaled trigger to validate GJets MC
+    """
+    
+    selector = gghg(sample, rname)
+
+    selector.setPreskim('superClusters.rawPt > 50. && TMath::Abs(superClusters.eta) < 1.4442')
+    selector.findOperator('PhotonSelection').setMinPt(50.)
+
+    if sample.data:
+        itrig = selector.index(selconf['sphTrigger'])
+        selector.removeOperator(selconf['sphTrigger'])
+        selector.addOperator(ROOT.HLTFilter('HLT_Photon50_R9Id90_HE10_IsoM_OR_HLT_Photon75_R9Id90_HE10_IsoM_OR_HLT_Photon90_R9Id90_HE10_IsoM_OR_HLT_Photon120_R9Id90_HE10_IsoM'), itrig)
+        filt = ROOT.HLTFilter('HLT_Photon50_R9Id90_HE10_IsoM')
+        filt.setIgnoreDecision(True)
+        selector.addOperator(filt)
+        filt = ROOT.HLTFilter('HLT_Photon75_R9Id90_HE10_IsoM')
+        filt.setIgnoreDecision(True)
+        selector.addOperator(filt)
+        filt = ROOT.HLTFilter('HLT_Photon90_R9Id90_HE10_IsoM')
+        filt.setIgnoreDecision(True)
+        selector.addOperator(filt)
+        filt = ROOT.HLTFilter('HLT_Photon120_R9Id90_HE10_IsoM')
+        filt.setIgnoreDecision(True)
+        selector.addOperator(filt)
+
+    return selector
+
 def signalRaw(sample, rname):
     """
     Ignore decisions of all cuts to compare shapes for different simulations.

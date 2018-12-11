@@ -6,6 +6,8 @@ import os
 import math
 import re
 import collections
+import shutil
+import tempfile
 import importlib
 
 import ROOT
@@ -60,11 +62,15 @@ def makePlotter(plotConfig, group, sample, region, sourceDir, altSourceDir, lumi
 
     if baseSel:
         plotter.addVariable('__baseline__', baseSel)
-        plotter.addCut('baseline', '__baseline__')
+        plotter.addCut('baseline', '__baseline__[0]')
+    else:
+        plotter.addCut('baseline', '1.')
 
     if fullSel:
         plotter.addVariable('__fullSelection__', fullSel)
-        plotter.addCut('fullSelection', fullSel)
+        plotter.addCut('fullSelection', '__fullSelection__[0]')
+    else:
+        plotter.addCut('fullSelection', '1.')
 
     for name, expr in plotConfig.cuts.iteritems():
         plotter.addCut(name, expr)
@@ -74,6 +80,9 @@ def makePlotter(plotConfig, group, sample, region, sourceDir, altSourceDir, lumi
 
     if group == plotConfig.obs:
         plotter.setPrescale(plotConfig.prescales[sample])
+
+    if group.reweight:
+        plotter.setReweight(group.reweight)
 
     plotter.setPrintLevel(printLevel)
 
@@ -124,7 +133,7 @@ def fillPlots(plotConfig, group, plotdefs, sourceDir, outFile, lumi = 0., postsc
                 hist,
                 plotdef.formExpression(),
                 plotdef.cutName,
-                '',
+                plotdef.reweight,
                 overflowMode
             )
 
@@ -140,6 +149,12 @@ def fillPlots(plotConfig, group, plotdefs, sourceDir, outFile, lumi = 0., postsc
                         reweight = str(1. + variation.reweight * (1. - 2. * iv))
                     else:
                         reweight = ''
+
+                    if plotdef.reweight:
+                        if reweight:
+                            reweight = '(%s) * (%s)' % (reweight, plotdef.reweight)
+                        else:
+                            reweight = plotdef.reweight
 
                     if variation.cuts is not None:
                         reweight = ' && '.join(['(%s)' % s for s in (reweight, variation.cuts[iv].strip())])
@@ -179,7 +194,8 @@ def fillPlots(plotConfig, group, plotdefs, sourceDir, outFile, lumi = 0., postsc
 
     for (sample, plotdef, variation, _), hist in histograms.items():
         # ad-hoc scaling
-        hist.Scale(group.scale)
+        if group.scale != 'data':
+            hist.Scale(group.scale)
 
         if group.norm >= 0.:
             hist.Scale(group.norm / normalization)
@@ -556,6 +572,20 @@ def printCanvas(canvas, plotdef, plotConfig, plotDir):
     ROOT.gErrorIgnoreLevel = eil
 
 
+def removeBaskets(dir_in, dir_out):
+    # Use of alias leaves orphan baskets in the output file
+    for key in dir_in.GetListOfKeys():
+        if key.GetClassName() == 'TDirectoryFile':
+            removeBaskets(dir_in.GetDirectory(key.GetName()), dir_out.mkdir(key.GetName()))
+            continue
+
+        obj = key.ReadObj()
+        if obj.InheritsFrom(ROOT.TH1.Class()):
+            dir_out.cd()
+            clone = obj.Clone()
+            clone.Write()
+
+
 if __name__ == '__main__':
 
     from argparse import ArgumentParser
@@ -789,8 +819,17 @@ if __name__ == '__main__':
                 writeHist(obshist)
 
         if args.histFile:
-            # close and reopen the output file
+            # purge orphan baskets
+            tmpPath = tempfile.mkdtemp()
+            tmpout = ROOT.TFile.Open(tmpPath + '/hist.root', 'recreate')
+            removeBaskets(histFile, tmpout)
             histFile.Close()
+            tmpout.Close()
+            os.unlink(args.histFile)
+            shutil.copyfile(tmpPath + '/hist.root', args.histFile)
+            shutil.rmtree(tmpPath)
+
+            # reopen the output file
             histFile = ROOT.TFile.Open(args.histFile)
 
     # closes if not args.replot
@@ -865,14 +904,39 @@ if __name__ == '__main__':
 
         inDir = histFile.GetDirectory(plotdef.name)
 
+        # observed distributions
+        obshist = inDir.Get('data_obs')
+
+        # deal with the special case of fill-to-data scaling
+        fillToDataScale = 1.
+        if obshist and not plotdef.mcOnly:
+            othersTotal = 0.
+            scaledTotal = 0.
+            for group in plotConfig.bkgGroups:
+                ghist = inDir.Get(group.name + '_syst')
+    
+                if group.scale == 'data':
+                    scaledTotal += ghist.GetSumOfWeights()
+                else:
+                    othersTotal += ghist.GetSumOfWeights()
+    
+            if scaledTotal != 0.:
+                fillToDataScale = (obshist.GetSumOfWeights() - othersTotal) / scaledTotal
+
         # fetch and format background groups
         for group in plotConfig.bkgGroups:
             ghist = inDir.Get(group.name + '_syst')
 
+            if group.scale == 'data':
+                # special case - scaling this group to data (for shape comparison)
+                ghist.Scale(fillToDataScale)
+
             if graphic:
                 formatHist(ghist, plotdef)
                 title = group.title
-                if group.scale != 1.:
+                if group.scale == 'data':
+                    title += ' (norm. to obs)'
+                elif group.scale != 1.:
                     title += (' #times %.1f' % group.scale)
                 canvas.addStacked(ghist, title = title, color = group.color, drawOpt = drawOpt)
             else:
@@ -891,14 +955,11 @@ if __name__ == '__main__':
                 if graphic:
                     formatHist(shist, plotdef)
                     title = sspec.title
-                    if sspec.group.scale != 1.:
+                    if sspec.group.scale != 1. and group.scale != 'data':
                         title += (' #times %.1f' % sspec.group.scale)
                     canvas.addSignal(shist, title = title, color = sspec.color, drawOpt = drawOpt)
                 else:
                     counters[sspec.name] = shist
-
-        # observed distributions
-        obshist = inDir.Get('data_obs')
 
         if obshist:
             if graphic:

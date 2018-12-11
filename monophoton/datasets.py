@@ -216,9 +216,17 @@ class SampleDef(object):
 
                         try:
                             counter = source.Get('eventcounter')
+                            if math.isnan(counter.GetBinContent(1)):
+                                print path, 'contains NaN event counter'
+                                raise RuntimeError('NaN weight')
+
                             self.nevents += counter.GetBinContent(1)
                             if not self.data:
                                 sumw = source.Get('hSumW')
+                                if math.isnan(sumw.GetBinContent(1)):
+                                    print path, 'contains NaN sumw'
+                                    raise RuntimeError('NaN weight')
+
                                 self.sumw += sumw.GetBinContent(1)
                                 self._sumw2 += math.pow(sumw.GetBinError(1), 2.)
 

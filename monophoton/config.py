@@ -21,5 +21,8 @@ plotDir = config
 # panda library
 libobjs = 'libPandaTreeObjects.so'
 
-# MultiDraw library
+# MultiDraw library (https://github.com/yiiyama/multidraw)
 libmultidraw = '/home/yiiyama/cms/tools/multidraw/libmultidraw.so'
+
+# Original RooFit classes library (https://github.com/yiiyama/RooFit)
+libroofit = '/home/yiiyama/cms/studies/RooFit/libCommonRooFit.so'

@@ -7,7 +7,7 @@ import ROOT
 from datasets import allsamples
 
 class GroupSpec(object):
-    def __init__(self, name, title, samples = [], region = '', count = 0., color = ROOT.kBlack, altbaseline = '', cut = '', scale = 1., norm = -1.):
+    def __init__(self, name, title, samples = [], region = '', count = 0., color = ROOT.kBlack, altbaseline = '', cut = '', scale = 1., reweight = '', norm = -1.):
         self.name = name
         self.title = title
         self.samples = samples
@@ -15,6 +15,7 @@ class GroupSpec(object):
         self.count = count
         self.color = color
         self.scale = scale # use for ad-hoc scaling of histograms
+        self.reweight = reweight # use for ad-hoc reweighting
         self.cut = cut # additional cut (if samples are looser than the nominal region, e.g. to allow variations)
         self.altbaseline = altbaseline # use to replace baseline cut (hack for using lowdphi gjets shape in SR)
         self.norm = norm # use to normalize histograms post-fill. Set to the expected number of events after full selection
@@ -22,6 +23,7 @@ class GroupSpec(object):
 
     def addVariation(self, name, **kwd):
         self.variations.append(Variation(name, **kwd))
+
 
 class SampleSpec(object):
     # use for signal point spec
@@ -35,12 +37,13 @@ class SampleSpec(object):
 
 
 class PlotDef(object):
-    def __init__(self, name, title, expr, binning, unit = '', cutName = 'baseline', blind = None, sensitive = False, overflow = False, mcOnly = False, logy = None, ymax = -1., ymin = 0.):
+    def __init__(self, name, title, expr, binning, unit = '', cutName = 'baseline', reweight = '', blind = None, sensitive = False, overflow = False, mcOnly = False, logy = None, ymax = -1., ymin = 0.):
         self.name = name
         self.title = title
         self.unit = unit
         self.expr = expr # expression to plot
         self.cutName = cutName # Name of the cut the plot belongs to
+        self.reweight = reweight
         self.binning = binning
         self.blind = blind # 'full' or a range in 2-tuple. Always takes effect if set.
         self.sensitive = sensitive # whether to add signal distributions + prescale observed

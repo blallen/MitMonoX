@@ -20,29 +20,28 @@ config.aliases['met150'] = 't1Met.pt > 150.'
 config.aliases['mtPhoMet300'] = 'photons.mt[0] < 300.'
 config.aliases['minJetDPhi0p5'] = 't1Met.minJetDPhi > 0.5'
 config.aliases['vbfVeto'] = 'pdijet.size == 0'
-config.aliases['baseSel'] = 'photonPt220 && met150 && mtPhoMet300 && minJetDPhi0p5 && vbfVeto'
+config.aliases['baseSel'] = 'photonPt220 && mtPhoMet300'
+config.aliases['fullSel'] = 'baseSel && met150 && minJetDPhi0p5 && vbfVeto'
 config.aliases['hfakeSels'] = 'photons.nhIsoX[0][1] < 2.725 && photons.phIsoX[0][1] < 2.571 && photons.chIsoX[0][1] > 0.441'
 
 config.cuts['noDPhiJet'] = 'photonPt220 && met150 && mtPhoMet300 && vbfVeto'
 config.cuts['noMet'] = 'photonPt220 && mtPhoMet300 && minJetDPhi0p5 && vbfVeto'
 config.cuts['noMtPhoMet'] = 'photonPt220 && met150 && minJetDPhi0p5 && vbfVeto'
 
-if 'gghg' in pu.confName and pu.confName not in ['gghgj', 'gghgg']:
+if 'gghg' in pu.confName and pu.confName not in ['gghgj', 'gghgg'] and not pu.confName.startswith('gghgLowPt'):
     config.name = 'gghg'
 
-    monophData = common.photonData
-
-    for sname in monophData:
+    for sname in common.photonData:
         if type(sname) == tuple:
             config.addObs(*sname)
         else:
             config.addObs(sname)
 
     config.baseline = 'baseSel'
-    config.fullSelection = ''
+    config.fullSelection = 'met150 && minJetDPhi0p5'
 
-    config.cuts['phoDPhi0p5'] = 't1Met.photonDPhi > 0.5'
-    config.cuts['jetPt30'] = 'jets.pt_ > 30.'
+    config.cuts['phoDPhi0p5'] = 'baseSel && t1Met.photonDPhi > 0.5'
+    config.cuts['jetPt30'] = 'baseSel && jets.pt_ > 30.'
 
     config.addSig('dph', 'Dark Photon', samples = ['dph-*'], scale = 0.1)
     config.addSig('dphv', 'Dark Photon (VBF)', samples = ['dphv-*'], scale = 0.1)
@@ -54,44 +53,51 @@ if 'gghg' in pu.confName and pu.confName not in ['gghgj', 'gghgg']:
     # config.addBkg('wjets', 'W(#mu,#tau) + jets', samples = common.wlnun, color = ROOT.TColor.GetColor(0x22, 0x22, 0x22))
     # config.addBkg('vvg', 'VV#gamma', samples = ['ww', 'wz', 'zz'], color = ROOT.TColor.GetColor(0xff, 0x44, 0x99))
     config.addBkg('top', 't#bar{t}#gamma/t#gamma', samples = ['ttg'], color = ROOT.TColor.GetColor(0x55, 0x44, 0xff))
-    config.addBkg('hfake', 'Hadronic fakes', samples = monophData, region = 'gghHfake', color = ROOT.TColor.GetColor(0xbb, 0xaa, 0xff), cut = 'hfakeSels')
+    config.addBkg('hfake', 'Hadronic fakes', samples = common.photonData, region = 'gghHfake', color = ROOT.TColor.GetColor(0xbb, 0xaa, 0xff), cut = 'hfakeSels')
     #config.addBkg('gjets', '#gamma + jets', samples = common.gj, color = ROOT.TColor.GetColor(0xff, 0xaa, 0xcc))
     config.addBkg('gjets', '#gamma + jets', samples = ['gju'], color = ROOT.TColor.GetColor(0xff, 0xaa, 0xcc))
     config.addBkg('zg', 'Z#rightarrow#nu#nu+#gamma, Z#rightarrowll+#gamma', samples = ['znng-130-o', 'zllg-130-o', 'zllg-300-o'], color = ROOT.TColor.GetColor(0x99, 0xff, 0xaa))
     config.addBkg('wg', 'W#rightarrowl#nu+#gamma', samples = ['wnlg-130-o'], color = ROOT.TColor.GetColor(0x99, 0xee, 0xff))
-    config.addBkg('efake', 'Electron fakes', samples = monophData, region = 'gghEfake', color = ROOT.TColor.GetColor(0xff, 0xee, 0x99))
+    config.addBkg('efake', 'Electron fakes', samples = common.photonData, region = 'gghEfake', color = ROOT.TColor.GetColor(0xff, 0xee, 0x99))
     if pu.confName == 'gghgFakeRandom':
         config.addBkg('fakemet', 'Fake E_{T}^{miss}', samples = common.gj, region = 'fakeMetRandom', color = ROOT.TColor.GetColor(0x66, 0x66, 0x66), norm = 5.)
     elif pu.confName == 'gghgNoGSFix':
-        config.addBkg('fakemet', 'Fake E_{T}^{miss}', samples = monophData, region = 'gghgNoGSFix', color = ROOT.TColor.GetColor(0x66, 0x66, 0x66), norm = 5.)
+        config.addBkg('fakemet', 'Fake E_{T}^{miss}', samples = common.photonData, region = 'gghgNoGSFix', color = ROOT.TColor.GetColor(0x66, 0x66, 0x66), norm = 5.)
     elif pu.confName != 'gghgNoFake':
         config.addBkg('fakemet', 'Fake E_{T}^{miss}', samples = common.gj, region = 'fakeMet50', color = ROOT.TColor.GetColor(0x66, 0x66, 0x66), norm = 5.)
 
-    config.addPlot('mtPhoMet', 'M_{T#gamma}', 'photons.mt[0]', mtBinning, unit = 'GeV', sensitive = True) # , ymax = 5.4)
+    config.addPlot('mtPhoMet', 'M_{T#gamma}', 'photons.mt[0]', mtBinning, unit = 'GeV') # , ymax = 5.4)
     # config.addPlot('mtPhoMetUp', 'M_{T#gamma}', mtPhoMetUp, mtBinning, unit = 'GeV', sensitive = True, ymax = 5.1)
     # config.addPlot('mtPhoMetDown', 'M_{T#gamma}', mtPhoMetDown, mtBinning, unit = 'GeV', sensitive = True, ymax = 5.1)
-    config.addPlot('mtPhoMetDPhiCut', 'M_{T#gamma}', 'photons.mt[0]', mtBinning, unit = 'GeV', cutName = 'phoDPhi0p5', sensitive = True)
+    config.addPlot('mtPhoMetDPhiCut', 'M_{T#gamma}', 'photons.mt[0]', mtBinning, unit = 'GeV', cutName = 'phoDPhi0p5')
     config.addPlot('mtPhoMetWide', 'M_{T#gamma}', 'photons.mt[0]', mtWideBinning, unit = 'GeV', cutName = 'noMtPhoMet', overflow = True, sensitive = True)
-    config.addPlot('recoilScan', 'E_{T}^{miss}', 't1Met.pt', [0. + 25. * x for x in range(21)], unit = 'GeV', cutName = 'noMet', overflow = True, sensitive = True)
+    config.addPlot('recoilScan', 'E_{T}^{miss}', 't1Met.pt', [0. + 25. * x for x in range(21)], unit = 'GeV', cutName = 'noMet', overflow = True, sensitive = True, blind = (125., 'inf'))
     config.addPlot('recoilPhi', '#phi_{E_{T}^{miss}}', 't1Met.phi', (30, -math.pi, math.pi))
-    config.addPlot('phoPtScan', 'E_{T}^{#gamma}', 'photons.scRawPt[0]', [175. + 25. * x for x in range(14)], unit = 'GeV', overflow = True, sensitive = True)
-    config.addPlot('phoEta', '#eta^{#gamma}', 'photons.eta_[0]', (20, -1.5, 1.5), sensitive = True)
+    config.addPlot('phoPtScan', 'E_{T}^{#gamma}', 'photons.scRawPt[0]', [220. + 20. * x for x in range(21)], unit = 'GeV', overflow = True)
+    config.addPlot('phoEta', '#eta^{#gamma}', 'photons.eta_[0]', (20, -1.5, 1.5))
     config.addPlot('phoPhi', '#phi^{#gamma}', 'photons.phi_[0]', (20, -math.pi, math.pi))
     config.addPlot('nphotons', 'N_{#gamma}', 'photons.size', (4, 0., 4.))
-    config.addPlot('dPhiPhoMet', '#Delta#phi(#gamma, E_{T}^{miss})', "t1Met.photonDPhi", (13, 0., math.pi), overflow = True, sensitive = True)
-    config.addPlot('dPhiJetMet', '#Delta#phi(E_{T}^{miss}, j)', 'TMath::Abs(TVector2::Phi_mpi_pi(jets.phi_ - t1Met.phi))', (13, 0., math.pi), cutName = 'jetPt30', sensitive = True)
+    config.addPlot('dPhiPhoMet', '#Delta#phi(#gamma, E_{T}^{miss})', "t1Met.photonDPhi", (13, 0., math.pi), overflow = True)
+    config.addPlot('dPhiJetMet', '#Delta#phi(E_{T}^{miss}, j)', 'TMath::Abs(TVector2::Phi_mpi_pi(jets.phi_ - t1Met.phi))', (13, 0., math.pi), cutName = 'jetPt30')
     config.addPlot('dPhiJetMetMin', 'min#Delta#phi(E_{T}^{miss}, j)', 't1Met.minJetDPhi', (14, 0., math.pi), cutName = 'noDPhiJet', sensitive = True)
-    config.addPlot('dPhiPhoJetMin', 'min#Delta#phi(#gamma, j)', 'photons.minJetDPhi[0]', (14, 0., math.pi), sensitive = True)
-    config.addPlot('njets', 'N_{jet}', 'Sum$(jets.pt_ > 30.)', (6, 0., 6.), sensitive = True)
-    config.addPlot('njetsHighPt', 'N_{jet} (p_{T} > 100 GeV)', 'Sum$(jets.pt_ > 100.)', (10, 0., 10.), sensitive = True) 
-    config.addPlot('jetPt', 'p_{T}^{jet}', 'jets.pt_', [0., 100., 200., 300., 400., 600., 1000.], unit = 'GeV', cutName = 'jetPt30', overflow = True, sensitive = True)
-    config.addPlot('phoPtOverMet', 'E_{T}^{#gamma}/E_{T}^{miss}', 'photons.scRawPt[0] / t1Met.pt', (30, 0., 3.), sensitive = True)
-    config.addPlot('phoPtOverJetPt', 'E_{T}^{#gamma}/p_{T}^{jet}', 'photons.scRawPt[0] / jets.pt_[0]', (30, 0., 3.), sensitive = True)
-    config.addPlot('metSignif', 'E_{T}^{miss} Significance', 't1Met.pt / TMath::Sqrt(t1Met.sumETRaw)', (15, 0., 30.), sensitive = True)
+    config.addPlot('dPhiPhoJetMin', 'min#Delta#phi(#gamma, j)', 'photons.minJetDPhi[0]', (14, 0., math.pi))
+    config.addPlot('njets', 'N_{jet}', 'Sum$(jets.pt_ > 30.)', (6, 0., 6.))
+    config.addPlot('njetsHighPt', 'N_{jet} (p_{T} > 100 GeV)', 'Sum$(jets.pt_ > 100.)', (10, 0., 10.))
+    config.addPlot('jetPt', 'p_{T}^{jet}', 'jets.pt_', (40, 0., 1000.), unit = 'GeV', cutName = 'jetPt30', overflow = True)
+    config.addPlot('detajj', '#Delta#eta^{jj}', 'pdijet.dEtajj[0]', (40, 0., 10.))
+    config.addPlot('mjj', 'm^{jj}', 'pdijet.mjj[0]', (40, 0., 5000.), unit = 'GeV')
+    config.addPlot('phoPtOverMet', 'E_{T}^{#gamma}/E_{T}^{miss}', 'photons.scRawPt[0] / t1Met.pt', (30, 0., 5.), sensitive = True, blind = (0., 2.))
+    config.addPlot('phoPtOverJetPt', 'E_{T}^{#gamma}/p_{T}^{jet}', 'photons.scRawPt[0] / jets.pt_[0]', (30, 0., 3.))
+    config.addPlot('metSignif', 'E_{T}^{miss} Significance', 't1Met.pt / TMath::Sqrt(t1Met.sumETRaw)', (15, 0., 30.), sensitive = True, blind = (5., 'inf'))
     config.addPlot('nVertex', 'N_{vertex}', 'npv', (20, 0., 40.))
     config.addPlot('sieie', '#sigma_{i#eta i#eta}', 'photons.sieie[0]', (40, 0., 0.020))
     config.addPlot('sipip', '#sigma_{i#phi i#phi}', 'photons.sipip[0]', (40, 0., 0.020))
     config.addPlot('r9', 'r9', 'photons.r9[0]', (25, 0.7, 1.2))
+
+    for name in ['mtPhoMet', 'mtPhoMetDPhiCut', 'phoPtScan', 'phoPtOverMet', 'metSignif']:
+        orig = config.getPlot(name)
+        highmet = orig.clone(name + 'HighMet', cutName = 'fullSelection', sensitive = True)
+        config.plots.append(highmet)
 
     # Standard MC systematic variations
     for group in config.bkgGroups + config.sigGroups:
@@ -240,7 +246,7 @@ elif pu.confName == 'gghm':
     config.baseline = baseSel.replace('minJetDPhi', 'realMinJetDPhi') + ' && ' + mt + ' < 160.' 
     config.fullSelection = 't1Met.pt > 150.'
 
-    config.cuts['phoDPhi0p5'] = 't1Met.photonDPhi > 0.5'
+    config.cuts['phoDPhi0p5'] = '__baseline__[0] && t1Met.photonDPhi > 0.5'
 
     # config.addBkg('vvg', 'VV#gamma', samples = ['ww', 'wz', 'zz'], color = ROOT.TColor.GetColor(0xff, 0x44, 0x99))
     config.addBkg('zg', 'Z#rightarrowll+#gamma', samples = ['zllg-130-o', 'zllg-300-o'], color = ROOT.TColor.GetColor(0x99, 0xff, 0xaa))
@@ -326,7 +332,7 @@ elif pu.confName == 'gghe':
     config.aliases['eleMt'] = 'TMath::Sqrt(2. * t1Met.realMet * electrons.pt_[0] * (1. - TMath::Cos(dPhiEle0Met)))'
     config.aliases['gemass'] = 'TMath::Sqrt(2. * photons.scRawPt[0] * electrons.pt_[0] * (TMath::CosH(photons.eta_[0] - electrons.eta_[0]) - TMath::Cos(photons.phi_[0] - electrons.phi_[0])))'
 
-    config.cuts['onZ'] = 'photonPt220 && mtPhoMet300 && gemass > 80. && gemass < 100.'
+    config.cuts['onZ'] = '__baseline__[0] && photonPt220 && mtPhoMet300 && gemass > 80. && gemass < 100.'
 
     config.baseline = 'photonPt220 && mtPhoMet300'
 
@@ -684,6 +690,180 @@ elif pu.confName == 'gghee':
     config.findGroup('top').addVariation('minorQCDscale', reweight = 0.033)
     # config.findGroup('hfake').addVariation('purity', reweight = 'purity')
 
+elif pu.confName.startswith('gghgLowPt'):
+    config.name = 'gghgLowPt'
+
+    for sname in common.photonData:
+        if type(sname) == tuple:
+            config.addObs(*sname)
+        else:
+            config.addObs(sname)
+
+    if pu.confName.startswith('gghgLowPt50'):
+        config.obs.cut = 'HLT_Photon50_R9Id90_HE10_IsoM'
+        config.obs.samples[0].lumi = 17.297519972 + 10.742551656 + 76.271283029 + 172.235707624 + 30.950580307
+        config.baseline = 'photons.scRawPt[0] > 55. && photons.r9[0] > 0.9'
+    elif pu.confName.startswith('gghgLowPt75'):
+        config.obs.cut = 'HLT_Photon75_R9Id90_HE10_IsoM'
+        config.obs.samples[0].lumi = 86.487599860 + 53.712758278 + 340.281158463 + 691.787305111 + 154.752901535
+        config.baseline = 'photons.scRawPt[0] > 80. && photons.r9[0] > 0.9'
+    else:
+        raise RuntimeError('Unknown configuration ' + pu.confName)
+
+    for sample in config.obs.samples[1:]:
+        sample.lumi = 0.
+
+    config.aliases['detajj'] = 'TMath::Abs(jets.eta_[0] - jets.eta_[1])'
+    config.aliases['dphijj'] = 'TMath::Abs(TVector2::Phi_mpi_pi(jets.phi_[0] - jets.phi_[1]))'
+    config.aliases['pj1'] = 'jets.pt_[0] * TMath::CosH(jets.eta_[0])'
+    config.aliases['pj2'] = 'jets.pt_[1] * TMath::CosH(jets.eta_[1])'
+    config.aliases['pzj1'] = 'jets.pt_[0] * TMath::SinH(jets.eta_[0])'
+    config.aliases['pzj2'] = 'jets.pt_[1] * TMath::SinH(jets.eta_[1])'
+    config.aliases['mjsq1'] = 'jets.mass_[0] * jets.mass_[0]'
+    config.aliases['mjsq2'] = 'jets.mass_[1] * jets.mass_[1]'
+    config.aliases['mjj12'] = 'TMath::Sqrt(mjsq1[0] + mjsq2[0] + 2. * TMath::Sqrt((pj1[0] * pj1[0] + mjsq1[0]) * (pj2[0] * pj2[0] + mjsq2[0])) - 2. * jets.pt_[0] * jets.pt_[1] * TMath::Cos(dphijj[0]) - 2. * pzj1[0] * pzj2[0])'
+
+    config.cuts['mjj300'] = '__baseline__[0] && mjj12[0] > 300.'
+    config.cuts['mjj500'] = '__baseline__[0] && mjj12[0] > 500.'
+
+    if pu.confName.endswith('LO'):
+        config.addBkg('gjets', '#gamma + jets', samples = common.gj, color = ROOT.TColor.GetColor(0xff, 0xaa, 0xcc))#, scale = 'data')
+    elif pu.confName.endswith('LONoKfactor'):
+        config.addBkg('gjets', '#gamma + jets', samples = common.gj, color = ROOT.TColor.GetColor(0xff, 0xaa, 0xcc), reweight = '1./weight_QCDCorrection')
+    else:
+        config.addBkg('gjets', '#gamma + jets', samples = ['gju'], color = ROOT.TColor.GetColor(0xff, 0xaa, 0xcc))#, scale = 'data')
+
+    config.addPlot('mtPhoMet', 'M_{T#gamma}', 'photons.mt[0]', mtBinning, unit = 'GeV') # , ymax = 5.4)
+    config.addPlot('recoilScan', 'E_{T}^{miss}', 't1Met.pt', [0. + 25. * x for x in range(21)], unit = 'GeV', overflow = True, sensitive = True, blind = (125., 'inf'))
+    config.addPlot('recoilPhi', '#phi_{E_{T}^{miss}}', 't1Met.phi', (30, -math.pi, math.pi))
+    config.addPlot('phoPtScan', 'E_{T}^{#gamma}', 'photons.scRawPt[0]', (50, 0., 300.), unit = 'GeV', overflow = True)
+    config.addPlot('phoPtMjj500', 'E_{T}^{#gamma}', 'photons.scRawPt[0]', (50, 0., 300.), unit = 'GeV', cutName = 'mjj500', overflow = True)
+    config.addPlot('phoEta', '#eta^{#gamma}', 'photons.eta_[0]', (20, -1.5, 1.5))
+    config.addPlot('phoPhi', '#phi^{#gamma}', 'photons.phi_[0]', (20, -math.pi, math.pi))
+    config.addPlot('nphotons', 'N_{#gamma}', 'photons.size', (4, 0., 4.))
+    config.addPlot('dPhiPhoMet', '#Delta#phi(#gamma, E_{T}^{miss})', "t1Met.photonDPhi", (13, 0., math.pi), overflow = True)
+    config.addPlot('dPhiJetMet', '#Delta#phi(E_{T}^{miss}, j)', 'TMath::Abs(TVector2::Phi_mpi_pi(jets.phi_ - t1Met.phi))', (13, 0., math.pi))
+    config.addPlot('dPhiPhoJetMin', 'min#Delta#phi(#gamma, j)', 'photons.minJetDPhi[0]', (14, 0., math.pi))
+    config.addPlot('dPhiJetJet', '#Delta#phi(j1, j2)', 'dphijj', (14, 0., math.pi))
+    config.addPlot('dPhiJetJetHighMjj', '#Delta#phi(j1, j2)', 'dphijj', (14, 0., math.pi), cutName = 'mjj300')
+    config.addPlot('njets', 'N_{jet}', 'Sum$(jets.pt_ > 30.)', (6, 0., 6.))
+    config.addPlot('njetsHighPt', 'N_{jet} (p_{T} > 100 GeV)', 'Sum$(jets.pt_ > 100.)', (10, 0., 10.))
+    config.addPlot('jetPt', 'p_{T}^{jet}', 'jets.pt_', (40, 0., 500.), unit = 'GeV', overflow = True)
+    config.addPlot('jet1Pt', 'p_{T}^{jet1}', 'jets.pt_[0]', (40, 0., 500.), unit = 'GeV', overflow = True)
+    config.addPlot('jet2Pt', 'p_{T}^{jet2}', 'jets.pt_[1]', (40, 0., 500.), unit = 'GeV', overflow = True)
+    config.addPlot('detajj', '#Delta#eta^{jj}', 'detajj', (10, 0., 8.))
+    config.addPlot('detajjHighMjj', '#Delta#eta^{jj}', 'detajj', (10, 0., 8.), cutName = 'mjj300')
+    config.addPlot('mjj', 'm^{jj}', 'mjj12', (20, 0., 3500.), unit = 'GeV', overflow = True)
+    config.addPlot('phoPtOverMet', 'E_{T}^{#gamma}/E_{T}^{miss}', 'photons.scRawPt[0] / t1Met.pt', (30, 0., 5.), sensitive = True, blind = (0., 2.))
+    config.addPlot('phoPtOverJetPt', 'E_{T}^{#gamma}/p_{T}^{jet}', 'photons.scRawPt[0] / jets.pt_[0]', (30, 0., 3.))
+    config.addPlot('metSignif', 'E_{T}^{miss} Significance', 't1Met.pt / TMath::Sqrt(t1Met.sumETRaw)', (15, 0., 30.), sensitive = True, blind = (5., 'inf'))
+    config.addPlot('nVertex', 'N_{vertex}', 'npv', (20, 0., 40.))
+    config.addPlot('sieie', '#sigma_{i#eta i#eta}', 'photons.sieie[0]', (40, 0., 0.020))
+    config.addPlot('sipip', '#sigma_{i#phi i#phi}', 'photons.sipip[0]', (40, 0., 0.020))
+    config.addPlot('r9', 'r9', 'photons.r9[0]', (25, 0.7, 1.2))
+    config.addPlot('htGen', 'H_{T}^{gen}', 'Sum$(partons.pt_ * (TMath::Abs(partons.pdgid) < 6 || partons.pdgid == 21))', (200, 0., 2000.), overflow = True, mcOnly = True)
+
+    # Standard MC systematic variations
+    for group in config.bkgGroups + config.sigGroups:
+        group.addVariation('lumi', reweight = 0.027)
+
+        group.addVariation('photonSF', reweight = 'photonSF')
+        group.addVariation('pixelVetoSF', reweight = 'pixelVetoSF')
+        group.addVariation('leptonVetoSF', reweight = 0.02)
+
+        replUp = [('t1Met.minJetDPhi', 't1Met.minJetDPhiJECUp'), ('t1Met.pt', 't1Met.ptCorrUp')]
+        replDown = [('t1Met.minJetDPhi', 't1Met.minJetDPhiJECDown'), ('t1Met.pt', 't1Met.ptCorrDown')]
+        group.addVariation('jec', replacements = (replUp, replDown))
+
+        replUp = [('t1Met.minJetDPhi', 't1Met.minJetDPhiGECUp'), ('photons.scRawPt', 'photons.ptVarUp'), ('t1Met.pt', 't1Met.ptGECUp')]
+        replDown = [('t1Met.minJetDPhi', 't1Met.minJetDPhiGECDown'), ('photons.scRawPt', 'photons.ptVarDown'), ('t1Met.pt', 't1Met.ptGECDown')]
+        group.addVariation('gec', replacements = (replUp, replDown))
+
+        group.addVariation('minorQCDscale', reweight = 0.033)
+
+elif pu.confName.startswith('ewkg'):
+    config.name = 'gghgLowPt'
+
+    #for sname in common.photonData:
+    #    if type(sname) == tuple:
+    #        config.addObs(*sname)
+    #    else:
+    #        config.addObs(sname)
+
+    config.baseline = 'photons.scRawPt[0] > 75. && photons.tight[0]'
+    if pu.confName.endswith('VBFTrig'):
+        config.baseline += ' && photons.r9[0] > 0.9 && detajj[0] > 3.'
+
+    config.aliases['jet50'] = 'jets.pt_ > 50. && TMath::Abs(jets.eta_) < 4.7'
+    config.aliases['njets50'] = 'Sum$(jet50)'
+    config.aliases['detajj'] = 'TMath::Abs(jets.eta_[0] - jets.eta_[1])'
+    config.aliases['dphijj'] = 'TMath::Abs(TVector2::Phi_mpi_pi(jets.phi_[0] - jets.phi_[1]))'
+    config.aliases['pj1'] = 'jets.pt_[0] * TMath::CosH(jets.eta_[0])'
+    config.aliases['pj2'] = 'jets.pt_[1] * TMath::CosH(jets.eta_[1])'
+    config.aliases['pzj1'] = 'jets.pt_[0] * TMath::SinH(jets.eta_[0])'
+    config.aliases['pzj2'] = 'jets.pt_[1] * TMath::SinH(jets.eta_[1])'
+    config.aliases['mjsq1'] = 'jets.mass_[0] * jets.mass_[0]'
+    config.aliases['mjsq2'] = 'jets.mass_[1] * jets.mass_[1]'
+    config.aliases['mjj12'] = 'TMath::Sqrt(mjsq1[0] + mjsq2[0] + 2. * TMath::Sqrt((pj1[0] * pj1[0] + mjsq1[0]) * (pj2[0] * pj2[0] + mjsq2[0])) - 2. * jets.pt_[0] * jets.pt_[1] * TMath::Cos(dphijj[0]) - 2. * pzj1[0] * pzj2[0])'
+
+    config.cuts['leadJets'] = 'jet50[0] && jet50[1]'
+    config.cuts['mjj500'] = '__baseline__[0] && jet50[0] && jet50[1] && mjj12[0] > 500.'
+    config.cuts['mjj1000'] = '__baseline__[0] && jet50[0] && jet50[1] && mjj12[0] > 1000.'
+    config.cuts['mjj500PhoPt200'] = '__baseline__[0] && jet50[0] && jet50[1] && mjj12[0] > 500. && photons.scRawPt[0] > 200.'
+    config.cuts['phoPt200'] = '__baseline__[0] && photons.scRawPt[0] > 200.'
+
+    config.addBkg('gjetslo', '#gamma + jets', samples = common.gj, color = ROOT.TColor.GetColor(0xff, 0xaa, 0xcc), reweight = '1./weight_QCDCorrection')#, scale = 'data')
+    config.addBkg('gjets', '#gamma + jets', samples = ['gju'], color = ROOT.TColor.GetColor(0xff, 0xaa, 0xcc))#, scale = 'data')
+
+    config.addPlot('phoPt', 'E_{T}^{#gamma}', 'photons.scRawPt[0]', (50, 0., 500.), unit = 'GeV', overflow = True)
+    config.addPlot('phoPtTwoJets', 'E_{T}^{#gamma}', 'photons.scRawPt[0]', (50, 0., 500.), unit = 'GeV', cutName = 'leadJets', overflow = True)
+    config.addPlot('phoPtMjj500', 'E_{T}^{#gamma}', 'photons.scRawPt[0]', (50, 0., 500.), unit = 'GeV', cutName = 'mjj500', overflow = True)
+    config.addPlot('phoPtMjj1000', 'E_{T}^{#gamma}', 'photons.scRawPt[0]', (50, 0., 500.), unit = 'GeV', cutName = 'mjj1000', overflow = True)
+    config.addPlot('phoEta', '#eta^{#gamma}', 'photons.eta_[0]', (20, -1.5, 1.5))
+    config.addPlot('phoEtaTwoJets', '#eta^{#gamma}', 'photons.eta_[0]', (20, -1.5, 1.5), cutName = 'leadJets')
+    config.addPlot('phoEtaMjj500', '#eta^{#gamma}', 'photons.eta_[0]', (20, -1.5, 1.5), cutName = 'mjj500')
+    config.addPlot('phoPhi', '#phi^{#gamma}', 'photons.phi_[0]', (20, -math.pi, math.pi))
+    config.addPlot('nphotons', 'N_{#gamma}', 'photons.size', (4, 0., 4.))
+    config.addPlot('dPhiPhoJetMin', 'min#Delta#phi(#gamma, j)', 'photons.minJetDPhi[0]', (14, 0., math.pi))
+    config.addPlot('dPhiJetJet', '#Delta#phi(j1, j2)', 'dphijj', (14, 0., math.pi))
+    config.addPlot('njets', 'N_{jet}', 'njets50', (6, 0., 6.))
+    config.addPlot('njetsPhoPt200', 'N_{jet}', 'njets50', (6, 0., 6.), cutName = 'phoPt200')
+    config.addPlot('njetsHighPt', 'N_{jet} (p_{T} > 100 GeV)', 'Sum$(jets.pt_ > 100.)', (10, 0., 10.))
+    config.addPlot('jetPt', 'p_{T}^{jet}', 'jets.pt_', (40, 0., 500.), unit = 'GeV', overflow = True)
+    config.addPlot('jet1Pt', 'p_{T}^{jet1}', 'jets.pt_[0]', (40, 0., 500.), unit = 'GeV', cutName = 'leadJets', overflow = True)
+    config.addPlot('jet2Pt', 'p_{T}^{jet2}', 'jets.pt_[1]', (40, 0., 500.), unit = 'GeV', cutName = 'leadJets', overflow = True)
+    config.addPlot('detajj', '#Delta#eta^{jj}', 'detajj', (10, 0., 8.), cutName = 'leadJets')
+    config.addPlot('detajjMjj500', '#Delta#eta^{jj}', 'detajj', (10, 0., 8.), cutName = 'mjj500')
+    config.addPlot('mjj', 'm^{jj}', 'mjj12', (20, 500., 3500.), unit = 'GeV', cutName = 'leadJets', overflow = True)
+    config.addPlot('phoPtOverJetPt', 'E_{T}^{#gamma}/p_{T}^{jet}', 'photons.scRawPt[0] / jets.pt_[0]', (30, 0., 3.))
+    config.addPlot('metSignif', 'E_{T}^{miss} Significance', 't1Met.pt / TMath::Sqrt(t1Met.sumETRaw)', (15, 0., 30.))
+    config.addPlot('nVertex', 'N_{vertex}', 'npv', (20, 0., 40.))
+    config.addPlot('sieie', '#sigma_{i#eta i#eta}', 'photons.sieie[0]', (40, 0., 0.020))
+    config.addPlot('sipip', '#sigma_{i#phi i#phi}', 'photons.sipip[0]', (40, 0., 0.020))
+    config.addPlot('r9', 'r9', 'photons.r9[0]', (25, 0.7, 1.2))
+    config.addPlot('htGen', 'H_{T}^{gen}', 'Sum$(partons.pt_ * (TMath::Abs(partons.pdgid) < 6 || partons.pdgid == 21))', (200, 0., 2000.), overflow = True, mcOnly = True)
+    config.addPlot('countTwoJets', '', '0.5', (1, 0., 1.), cutName = 'leadJets')
+    config.addPlot('countMjj500', '', '0.5', (1, 0., 1.), cutName = 'mjj500')
+    config.addPlot('countMjj1000', '', '0.5', (1, 0., 1.), cutName = 'mjj1000')
+    config.addPlot('countMjj500PhoPt200', '', '0.5', (1, 0., 1.), cutName = 'mjj500PhoPt200')
+
+    # Standard MC systematic variations
+    for group in config.bkgGroups + config.sigGroups:
+        group.addVariation('lumi', reweight = 0.027)
+
+        group.addVariation('photonSF', reweight = 'photonSF')
+        group.addVariation('pixelVetoSF', reweight = 'pixelVetoSF')
+        group.addVariation('leptonVetoSF', reweight = 0.02)
+
+        replUp = [('t1Met.minJetDPhi', 't1Met.minJetDPhiJECUp'), ('t1Met.pt', 't1Met.ptCorrUp')]
+        replDown = [('t1Met.minJetDPhi', 't1Met.minJetDPhiJECDown'), ('t1Met.pt', 't1Met.ptCorrDown')]
+        group.addVariation('jec', replacements = (replUp, replDown))
+
+        replUp = [('t1Met.minJetDPhi', 't1Met.minJetDPhiGECUp'), ('photons.scRawPt', 'photons.ptVarUp'), ('t1Met.pt', 't1Met.ptGECUp')]
+        replDown = [('t1Met.minJetDPhi', 't1Met.minJetDPhiGECDown'), ('photons.scRawPt', 'photons.ptVarDown'), ('t1Met.pt', 't1Met.ptGECDown')]
+        group.addVariation('gec', replacements = (replUp, replDown))
+
+        group.addVariation('minorQCDscale', reweight = 0.033)
 
 else:
     raise RuntimeError('Unknown configuration ' + pu.confName)

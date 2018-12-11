@@ -191,9 +191,7 @@ class Cut : public BaseOperator, public CutMixin {
 
   TString expr() const override { return cutExpr(name_); }
 
-  bool exec(panda::EventMonophoton const& inEvent, panda::EventBase& outEvent) final {
-    return pass(inEvent, outEvent);
-  }
+  bool exec(panda::EventMonophoton const& inEvent, panda::EventBase& outEvent) final;
 
  protected:
   virtual bool pass(panda::EventMonophoton const&, panda::EventBase&) = 0;
@@ -203,10 +201,7 @@ class Modifier : public BaseOperator {
  public:
   Modifier(char const* name) : BaseOperator(name) {}
 
-  bool exec(panda::EventMonophoton const& inEvent, panda::EventBase& outEvent) final {
-    apply(inEvent, outEvent);
-    return true;
-  }
+  bool exec(panda::EventMonophoton const& inEvent, panda::EventBase& outEvent) final;
 
  protected:
   virtual void apply(panda::EventMonophoton const&, panda::EventBase&) = 0;
@@ -265,13 +260,12 @@ class HLTFilter : public Cut {
 
   void initialize(panda::EventMonophoton& _event) override;
   void addBranches(TTree& skimTree) override;
-    
+
  protected:
   bool pass(panda::EventMonophoton const&, panda::EventBase&) override;
 
   TString pathNames_{""};
   std::vector<UInt_t> tokens_;
-
   bool pass_{false};
 };
 
@@ -434,6 +428,7 @@ class PhotonSelection : public MonophotonCut {
 
   double minPt_{220.};
   double maxPt_{6500.};
+  bool ebOnly_{true};
   panda::XPhoton::IDTune idTune_{panda::XPhoton::kFall17};
   unsigned wp_{0}; // 0 -> loose, 1 -> medium
   unsigned nPhotons_{1}; // required number of photons

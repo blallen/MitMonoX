@@ -9,7 +9,8 @@ data_sph = [
     'gghg', 'gghEfake', 'gghHfake', 
     'gghe', 'ggheEfake', 'ggheHfake', 'gghm', 'gghmEfake', 'gghmHfake', 
     'gghee', 'gghmm',
-    'fakeMetRandom', 'fakeMet25', 'fakeMet50', 'fakeMet75'
+    'fakeMetRandom', 'fakeMet25', 'fakeMet50', 'fakeMet75',
+    'gghgLowPt'
 ]
 
 mc_cand = ['gghg']
@@ -25,8 +26,8 @@ skimconfig = {
     # Data
     'sph-17*': makeSel(data_sph),
 #    # MC
-    'gj{,04}-*': makeSel(mc_qcd + mc_cand, sp.addKfactor),
-    'gju': makeSel(mc_qcd + mc_cand),
+    'gj{,04}-*': makeSel(mc_qcd + mc_cand + ['gghgLowPt'], sp.addKfactor),
+    'gju': makeSel(mc_qcd + mc_cand + ['gghgLowPt']),
 #    'dyn-50': makeSel(mc_cand + mc_lep + mc_dilep, sg.addGenPhotonVeto),
 #    'dyn-50@': makeSel(makeSel(mc_cand + mc_lep + mc_dilep, sg.addGenPhotonVeto), sg.genBosonPtTruncator(maximum = 50.)),
 #    'dyn-50-*': makeSel(mc_cand + mc_lep + mc_dilep, sg.addGenPhotonVeto),
