@@ -9,6 +9,8 @@ import importlib
 
 import config
 
+from fileutil import request_data
+
 def expandBrace(pattern):
     """Expand a string with a brace-enclosed substitution pattern."""
 
@@ -332,45 +334,59 @@ class SampleDef(object):
 
         return filesT3
 
-    def download(self, filesets = []):
+    def download(self, filesets = [], requestPath = ''):
         self._readCatalogs()
 
-        for dataset in self.datasetNames:
-            if not self._downloadable[dataset]:
-                continue
+        if requestPath:
+            # requestPath = 'root://xrootd.cmsaf.mit.edu//store/user/paus/' + self.book + '/' + fileT2
+            print requestPath
 
-            filesT3 = self.checkT3(dataset)
-            filesT2 = self.checkT2(dataset)
+            localPath = request_data(requestPath, True)
+                    
+            tries = 1
+            while (localPath is None and tries < 5):
+                localPath = request_data(requestPath, False)
+                tries += 1
 
-            nTotal = 0
-            nMissing = 0
-            missingFiles = set()
-            for fileT2 in filesT2:
-                if fileT2 in filesT3:
-                    nTotal += 1
-                else:
-                    missingFiles.add(fileT2)
-                    nMissing +=1
+            return localPath
 
-            if nMissing == nTotal:
-                print 'No files present on T3. Requesting entire dataset.'
-                proc = subprocess.Popen(
-                    ['python2.6', '/usr/bin/dynamo-request', '--panda', self.book[self.book.find('/') + 1:], '--sample', dataset],
-                    stdout = subprocess.PIPE, stderr = subprocess.PIPE
-                    )
-                print proc.communicate()[0].strip()
+        else:
+            for dataset in self.datasetNames:
+                if not self._downloadable[dataset]:
+                    continue
 
-            elif nMissing > 0:
-                print 'Files partially available on T3. Requesting missing or corrupted blocks.'
+                filesT3 = self.checkT3(dataset)
+                filesT2 = self.checkT2(dataset)
+
+                nTotal = 0
+                nMissing = 0
+                missingFiles = set()
+                for fileT2 in filesT2:
+                    if fileT2 in filesT3:
+                        nTotal += 1
+                    else:
+                        missingFiles.add(fileT2)
+                        nMissing +=1
+
+                if nMissing == nTotal:
+                    print 'No files present on T3. Requesting entire dataset.'
+                    proc = subprocess.Popen(
+                        ['python2.6', '/usr/bin/dynamo-request', '--panda', self.book[self.book.find('/') + 1:], '--sample', dataset],
+                        stdout = subprocess.PIPE, stderr = subprocess.PIPE
+                        )
+                    print proc.communicate()[0].strip()
+                    
+                elif nMissing > 0:
+                    print 'Files partially available on T3. Requesting missing or corrupted blocks.'
                 ### eventually replace with block level requests
-                proc = subprocess.Popen(
-                    ['python2.6', '/usr/bin/dynamo-request', '--panda', self.book[self.book.find('/') + 1:], '--sample', dataset],
-                    stdout = subprocess.PIPE, stderr = subprocess.PIPE
-                    )
-                print proc.communicate()[0].strip()
+                    proc = subprocess.Popen(
+                        ['python2.6', '/usr/bin/dynamo-request', '--panda', self.book[self.book.find('/') + 1:], '--sample', dataset],
+                        stdout = subprocess.PIPE, stderr = subprocess.PIPE
+                        )
+                    print proc.communicate()[0].strip()
 
-            else:
-                print self.book + '/' + dataset + ' is already on disk at T3.'
+                else:
+                    print self.book + '/' + dataset + ' is already on disk at T3.'
 
     def filesets(self, datasetNames = []):
         self._readCatalogs()

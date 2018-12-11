@@ -126,6 +126,7 @@ class SkimSlimWeight(object):
         if not SkimSlimWeight.config['readRemote'] and not self.manual:
             # check for missing local copies and issue a smartcache download request
             self.sample.download()
+            
 
         if SkimSlimWeight.config['skipExisting']:
             logger.info('Checking for existing files.')
@@ -193,9 +194,12 @@ class SkimSlimWeight(object):
             raise RuntimeError('invalid configuration')
 
         if self.sample.data:
-            # lumilist set globally in CONFIGDIR/params.py
-            logger.info('Good lumi filter: %s', params.lumilist)
-            skimmer.setGoodLumiFilter(makeGoodLumiFilter(params.lumilist))
+            if params.lumilist == '':
+                pass
+            else:
+                # lumilist set globally in CONFIGDIR/params.py
+                logger.info('Good lumi filter: %s', params.lumilist)
+                skimmer.setGoodLumiFilter(makeGoodLumiFilter(params.lumilist))
 
         paths = {} # {filset: list of paths}
     
@@ -222,7 +226,14 @@ class SkimSlimWeight(object):
 
             skimmer.clearPaths()
             for fname in fnames:
-                skimmer.addPath(fname)
+                if not os.path.exists(fname) or os.stat(fname).st_size == 0:
+                    path = fname.replace('/mnt/hadoop/cms', 'root://xrootd.cmsaf.mit.edu/')
+                    localPath = self.sample.download(requestPath = path)
+                    if localPath is None:
+                        skimmer.addPath(fname)
+                    skimmer.addPath(localPath)
+                else:
+                    skimmer.addPath(fname)
 
             outNameBase = self.getOutNameBase(fileset)
             nentries = SkimSlimWeight.config['nentries']
@@ -311,6 +322,7 @@ class SSWBatchManager(BatchManager):
 
     def submitMerge(self, args):
         submitter = CondorRun(os.path.realpath(__file__))
+        # "X509UserProxy" : "/tmp/x509up_uUID"
         submitter.requirements = 'UidDomain == "mit.edu"'
 
         arguments = []
