@@ -229,9 +229,12 @@ class SkimSlimWeight(object):
                 if not os.path.exists(fname) or os.stat(fname).st_size == 0:
                     path = fname.replace('/mnt/hadoop/cms', 'root://xrootd.cmsaf.mit.edu/')
                     localPath = self.sample.download(requestPath = path)
-                    if localPath is None:
+                    try:
+                        skimmer.addPath(localPath)
+                    except:
+                        print("Couldn't find ", localPath)
+                        print "Using " + fname
                         skimmer.addPath(fname)
-                    skimmer.addPath(localPath)
                 else:
                     skimmer.addPath(fname)
 

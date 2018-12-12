@@ -22,10 +22,13 @@ _report_server = 'http://' + os.environ['SUBMIT_REPORT']         # where to send
 def _validate_file(p):
     if not path.isfile(p):
         return False
+
     ftest = root.TFile(p)
+
     if bool(ftest) and not(ftest.IsZombie()):
         print(_sname+'._validate_file', '%s is a good file'%p)
         return True 
+
     return False
 
 def request_data(xrd_path, first_attempt):
@@ -49,15 +52,18 @@ def request_data(xrd_path, first_attempt):
         if _is_t3:
             for user in _users:
                 local_user_path = local_path.replace('paus', user)
+
                 if _validate_file(local_user_path):
                     # tell server we're using this file
                     payload = {'path' : local_user_path, 
                                'bytes' : path.getsize(local_user_path)}
                     r = requests.post(_report_server+'/condor/requestdata', json=payload)
+
                     if r.status_code == 200:
                         print(_sname+'.request_data', 'return=%s'%(str(r).strip()))
                     else:
                         print(_sname+'.request_data', 'return=%s'%(str(r).strip()))
+
                     print(_sname+'.request_data', 'Using local user file %s'%local_path)
                     return local_user_path
 
@@ -65,25 +71,32 @@ def request_data(xrd_path, first_attempt):
     xrdargs = ['xrdcopy', '-f', xrd_path]
     if not stdout.isatty():
         xrdargs.insert(1, '--nopbar')
+
     cache = _is_t3 and _to_hdfs
     if cache:
         input_path = local_path.replace('paus', _user) 
         parent = '/'.join(input_path.split('/')[:-1])
+
         if not path.isdir(parent):
             try:
                 print(_sname+'.request_data', 'creating parent at '+parent)
                 os.makedirs(parent)
                 os.chmod(parent, 0777)
+
             except OSError as e:
                 print(_sname+'.request_data', str(e))
                 pass 
+
     xrdargs.append(input_path)
     xrdargs = ' '.join(xrdargs)
     print(_sname+'.request_data', xrdargs)
+
     ret = system(xrdargs)
     if ret:
         print(_sname+'.request_data', 'Failed to xrdcopy %s'%input_path)
         return None 
+
+    sleep(30)
     if _validate_file(input_path):
         if cache:
             payload = {'path' : input_path, 
@@ -92,4 +105,5 @@ def request_data(xrd_path, first_attempt):
             os.chmod(input_path, 0777)
         print(_sname+'.request_data', 'Successfully xrdcopied %s'%input_path)
         return input_path
+
     return None 
