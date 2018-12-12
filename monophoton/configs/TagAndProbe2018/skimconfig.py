@@ -20,7 +20,7 @@ skimconfig = {
     'dy-50@': makeSel(mc_dilep, sg.addGenPhotonVeto, sg.htTruncator(maximum = 100.)),
     'dy-50-*': makeSel(mc_dilep, sg.addGenPhotonVeto),
     'wlnu{,n}-*': makeSel(mc_lep),
-    'tt': makeSel(mc_dilep),
+    'tt*': makeSel(mc_dilep),
 #    'ww': makeSel(mc_dilep),
 #    'wz': makeSel(mc_dilep),
 #    'zz': makeSel(mc_dilep)

@@ -322,7 +322,6 @@ class SSWBatchManager(BatchManager):
 
     def submitMerge(self, args):
         submitter = CondorRun(os.path.realpath(__file__))
-        # "X509UserProxy" : "/tmp/x509up_uUID"
         submitter.requirements = 'UidDomain == "mit.edu"'
 
         arguments = []
@@ -350,6 +349,13 @@ class SSWBatchManager(BatchManager):
     def submitSkim(self, args):
         submitter = CondorRun(os.path.realpath(__file__))
         submitter.requirements = 'UidDomain == "mit.edu"'
+        try:
+            x509Proxy = os.environ['X509_USER_PROXY']
+        except KeyError:
+            x509Proxy = '/tmp/x509up_u%d' % os.getuid()
+
+        submitter.aux_input.append(x509Proxy)
+        submitter.env['X509_USER_PROXY'] = os.path.basename(x509Proxy)
 
         argTemplate = '%s -f %s'
     
@@ -358,13 +364,6 @@ class SSWBatchManager(BatchManager):
 
         if args.readRemote:
             argTemplate += ' -R'
-            try:
-                x509Proxy = os.environ['X509_USER_PROXY']
-            except KeyError:
-                x509Proxy = '/tmp/x509up_u%d' % os.getuid()
-
-            submitter.aux_input.append(x509Proxy)
-            submitter.env['X509_USER_PROXY'] = os.path.basename(x509Proxy)
 
         if args.openTimeout is not None:
             argTemplate += ' -m ' + str(args.openTimeout)
