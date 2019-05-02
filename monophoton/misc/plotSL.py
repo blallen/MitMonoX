@@ -45,4 +45,12 @@ canvas.xtitle = 'Bin label'
 canvas.ytitle = 'Bin label'
 canvas.ztitle = 'Covariance'
 
+canvas.Update(logz = True)
+canvas._needsUpdate = False 
+
+xaxis = canvas._histograms[-1].GetXaxis()
+yaxis = canvas._histograms[-1].GetYaxis()
+line = ROOT.TLine(xaxis.GetXmin(), yaxis.GetXmax(), xaxis.GetXmax(), yaxis.GetXmax())
+line.Draw()
+
 canvas.printWeb('EXO16053/fit/', 'signal_covar', logz = True)
