@@ -8,12 +8,13 @@ WEBDIR = os.environ['HOME'] + '/public_html/cmsplots'
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetTextFont(42)
 ROOT.gStyle.SetLabelSize(0.045, 'X')
-ROOT.gStyle.SetLabelSize(0.05, 'Y')
+ROOT.gStyle.SetLabelSize(0.045, 'Y')
 ROOT.gStyle.SetTitleSize(0.045, 'X')
-ROOT.gStyle.SetTitleSize(0.05, 'Y')
-ROOT.gStyle.SetTitleOffset(0.84, 'X')
-ROOT.gStyle.SetTitleOffset(1.3, 'Y')
+ROOT.gStyle.SetTitleSize(0.045, 'Y')
+ROOT.gStyle.SetTitleOffset(1.35, 'X')
+ROOT.gStyle.SetTitleOffset(1.35, 'Y')
 ROOT.gStyle.SetNdivisions(208, 'X')
+ROOT.gStyle.SetNdivisions(208, 'Y')
 ROOT.gStyle.SetFillStyle(0)
 
 def makeText(x1, y1, x2, y2, align = 22, font = 42, size = 0.035, ndc = True):
@@ -82,8 +83,8 @@ def makeAxis(axis, xmin = 0., xmax = 1., x = 0., ymin = 0., ymax = 1., y = 0., v
 
     gaxis.SetLabelFont(font)
     gaxis.SetTitleFont(font)
-    if titleSize > 0.:
-        gaxis.SetTitleOffset(ROOT.gStyle.GetTitleOffset(axis) * 0.05 / titleSize)
+    # if titleSize > 0.:
+    #     gaxis.SetTitleOffset(ROOT.gStyle.GetTitleOffset(axis) * 0.05 / titleSize)
     gaxis.SetTitleSize(titleSize)
     gaxis.SetLabelSize(0.95 * titleSize)
     gaxis.SetTickLength(0.03)
@@ -518,6 +519,9 @@ class SimpleCanvas(object):
 
             base.SetMinimum(minimum)
             base.SetMaximum(maximum)
+
+            base.GetXaxis().SetTitleOffset(1.15)
+            base.GetYaxis().SetTitleOffset(1.5)
 
             if base.InheritsFrom(ROOT.THStack.Class()) and base.GetHistogram():
                 # THStack has an absolutely retarded hard-coded weird override of minimum and maximum:

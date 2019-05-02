@@ -1,14 +1,14 @@
 import os
 
-outputName = 'efake17_pixelpf'
-outputDir = '/data/t3home000/' + os.environ['USER'] + '/monophoton/' + outputName 
+outputName = 'idsf' # 'efake_old' # 17_pixelpf'
+outputDir = '/data/t3home000/' + os.environ['USER'] + '/monophoton16/' + outputName 
 roofitDictsDir = '/home/yiiyama/cms/studies/RooFit'
 
-PRODUCT = 'frate'
-# PRODUCT = 'eff'
+# PRODUCT = 'frate'
+PRODUCT = 'eff'
 
-# analysis = 'monophoton'
-analysis = 'darkphoton'
+analysis = 'monophoton'
+# analysis = 'darkphoton'
 
 # panda::XPhoton::IDTune { 0 : S15, 1 : S16, 2 : GJCWiso, 3 : ZGCWIso }
 if analysis == 'monophoton':
@@ -58,7 +58,7 @@ lumiSamples = skimConfig['phdata'][0]
 
 def getBinning(binningName):
     if binningName == 'inclusive':
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [175., 6500.]
         
         fitBins = []
@@ -72,7 +72,7 @@ def getBinning(binningName):
         binning.append(500.)
 
     elif binningName in ['pt', 'ptnlo', 'ptnloalt']:
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [175., 200., 250., 6500.]
         
         fitBins = []
@@ -86,7 +86,7 @@ def getBinning(binningName):
         binning.append(500.)
 
     elif binningName == 'ptalt':
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [175., 200., 250., 300., 350., 400., 6500.]
         
         fitBins = []
@@ -103,7 +103,7 @@ def getBinning(binningName):
         binning.append(500.)
 
     elif binningName == 'ptalt2':
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [175., 200., 250., 6500.]
         
         fitBins = []
@@ -120,7 +120,7 @@ def getBinning(binningName):
         binning.append(500.)
 
     elif binningName == 'highpt':
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [175., 200., 225., 250., 275., 300., 350., 400., 6500.] 
         
         fitBins = []
@@ -134,7 +134,7 @@ def getBinning(binningName):
         binning.append(500.)
 
     elif binningName == 'lowpt':
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [24., 28., 32., 35., 38., 40., 42., 44., 46., 48., 50., 54., 58., 62., 66., 70., 75., 80., 85., 90., 100., 120., 140., 160.]
         
         fitBins = []
@@ -145,7 +145,7 @@ def getBinning(binningName):
             fitBins.append((name, cut))
 
     elif binningName in ['pogpt', 'pogptalt']:
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [20., 35., 50., 90., 150., 6500.]
         
         fitBins = []
@@ -159,7 +159,7 @@ def getBinning(binningName):
         binning.append(200.)
 
     elif binningName == 'pteta':
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         
         ptBinning = [175., 200., 250., 300., 350., 400., 6500.]
         etaBinning = [-1.5, -0.8, 0., 0.8, 1.5]
@@ -200,7 +200,7 @@ def getBinning(binningName):
 
 
     elif binningName in ['ptht', 'pthtalt']:
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         
         ptBinning = [20., 35., 50., 90., 150., 6500.] # [175., 200., 250., 6500.]
         htBinning = [0., 200., 400., 600., 800., 13000.]
@@ -225,7 +225,7 @@ def getBinning(binningName):
         binning = range(len(fitBins) + 1)
 
     elif binningName == 'test':
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [28., 32.]
         
         fitBins = []
@@ -236,7 +236,7 @@ def getBinning(binningName):
             fitBins.append((name, cut))
 
     elif binningName == 'mutest':
-        binningTitle = 'p_{T}^{probe} (GeV)'
+        binningTitle = 'E_{T}^{#gamma} (GeV)'
         binning = [24., 28.]
         
         fitBins = []

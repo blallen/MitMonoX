@@ -199,18 +199,24 @@ lumi = sum(allsamples[s].lumi for s in lumiSamples)
 
 
 canvas = SimpleCanvas(lumi = lumi, sim = (dataType == 'mc'))
-canvas.SetGrid(False, True)
+canvas.SetGrid(False, False)
 canvas.legend.setPosition(0.7, 0.8, 0.9, 0.9)
+
+canvas.xtitle = 'E_{T}^{#gamma} (GeV)'
+
 if PRODUCT == 'frate':
     result.SetMaximum(0.05)
-    canvas.legend.add(PRODUCT, 'R_{e}', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
+    canvas.legend.add(PRODUCT, 'Fit', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
     canvas.ylimits = (0., 0.05)
+    canvas.ytitle = 'Electron Fake Rate R_{e}'
 else:
-    canvas.legend.add(PRODUCT, '#epsilon_{e}', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
-    canvas.ylimits = (0.75, 1.)
+    canvas.legend.add(PRODUCT, 'Fit', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
+    canvas.ylimits = (0.8, 1.)
+    canvas.ytitle = 'Efficiency'
 
 if dataType == 'mc':
-    canvas.legend.add(PRODUCT + '_truth', 'MC truth', opt = 'LP', color = ROOT.kGreen, mstyle = 4)
+    canvas.legend.add(PRODUCT + '_truth', 'Truth', opt = 'LP', color = ROOT.kGreen, mstyle = 4)
+
     canvas.legend.apply(PRODUCT + '_truth', trueResult)
     canvas.addHistogram(trueResult, drawOpt = 'EP')
 

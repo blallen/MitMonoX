@@ -16,7 +16,7 @@ from tp.efake_conf import lumiSamples, outputName, outputDir, roofitDictsDir, ge
 
 binningName = sys.argv[1]
 
-ADDFIT = True
+ADDFIT = False
 
 binningTitle, binning, fitBins = getBinning(binningName)
 
@@ -63,12 +63,14 @@ lumi = sum(allsamples[s].lumi for s in lumiSamples)
 # scaleFactor.SetMaximum(1.05)
 
 canvas = SimpleCanvas(lumi = lumi)
-canvas.SetGrid(False, True)
+canvas.SetGrid(False, False)
 canvas.legend.setPosition(0.7, 0.8, 0.9, 0.9)
 
-canvas.legend.add('sf', 'Scale Factor', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
-canvas.legend.add('sf_truth', 'MC truth', opt = 'LP', color = ROOT.kGreen, mstyle = 4)
-canvas.ylimits = (0.9, 1.10)
+
+canvas.legend.add('sf', 'Fit', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
+canvas.legend.add('sf_truth', 'Truth', opt = 'LP', color = ROOT.kGreen, mstyle = 4)
+canvas.ylimits = (0.95, 1.05)
+canvas.ytitle = 'Scale Factor'
 
 canvas.legend.apply('sf_truth', sfTruth)
 canvas.addHistogram(sfTruth, drawOpt = 'EP')
@@ -102,7 +104,6 @@ if ADDFIT:
 
 canvas.xtitle = binningTitle
 canvas.printWeb(outputName, 'scaleFactor_' + binningName, logy = False)
-
 
 print 'Fit Results:'
 for iBin, (bin, _) in enumerate(fitBins):
