@@ -27,9 +27,9 @@ rcanvas = RatioCanvas(lumi = lumi)
 
 binning = array.array('d', map(float, selections.photonPtBinning))
 pid = 'medium'
-tune = 'Spring16' # 'GJetsCWIso'
-extras = 'pixel-chargedpf' # -monoph'
-suffix = '_Spring16' # '_GJetsCWIso'
+tune = 'GJetsCWIso' # 'Spring16'
+extras = 'pixel-monoph' #-chargedpf'
+suffix = '_' + tune
 
 itune = selections.Tunes.index(tune)
 
@@ -242,8 +242,8 @@ for confName, sels in configurations:
     canvas.legend.add(gname, title = '#gamma + jet', lcolor = ROOT.kBlack, lwidth = 2)
     canvas.legend.add(fname, title = '#gamma + jet #times impurity', lcolor = ROOT.kRed, lwidth = 2)
     canvas.legend.add(fname+'Syst', title = 'impurity #pm 1#sigma', lcolor = ROOT.kRed, lwidth = 2, lstyle = ROOT.kDashed)
-    canvas.legend.add(hname, title = 'EMobject + jet', lcolor = ROOT.kBlue, lwidth = 2)
-    canvas.legend.setPosition(0.6, 0.7, 0.95, 0.9)
+    canvas.legend.add(hname, title = 'EM object + jet', lcolor = ROOT.kBlue, lwidth = 2)
+    canvas.legend.setPosition(0.5, 0.7, 0.8, 0.9)
 
     canvas.legend.apply(gname, gpt)
     canvas.legend.apply(fname, fpt)
@@ -257,6 +257,7 @@ for confName, sels in configurations:
     canvas.addHistogram(fptDown, drawOpt = 'HIST')
     canvas.addHistogram(hpt, drawOpt = 'HIST')
 
+    canvas.xtitle = 'E_{T}^{#gamma} (GeV)'
     canvas.ylimits = (1.0, 2500000.)
     canvas.SetLogy(True)
 
@@ -266,14 +267,17 @@ for confName, sels in configurations:
     rcanvas.legend.Clear()
 
     # if samp == 'Down':
-    rcanvas.ylimits = (0., -1.)
+    rcanvas.ylimits = (0., 0.15)
     # else:
     # rcanvas.ylimits = (0., 0.05)
-
-    rcanvas.SetLogy(False)
+    rcanvas.xtitle = canvas.xtitle
+    rcanvas.ytitle = "R_{h}"
+    rcanvas.rtitle = "#pm 1#sigma / Nominal"
+    rcanvas.rlimits = (0.8, 1.2)
 
     rcanvas.legend.add(tname, title = 'transfer factor', lcolor = ROOT.kBlack, lwidth = 2)
     rcanvas.legend.add(tname+'Syst', title = 'impurity #pm 1#sigma', lcolor = ROOT.kBlack, lwidth = 2, lstyle = ROOT.kDashed)
+    rcanvas.legend.setPosition(0.2, 0.4, 0.4, 0.5)
 
     rcanvas.legend.apply(tname, tfact)
     rcanvas.legend.apply(tname+'Syst', tfactUp)
@@ -283,4 +287,6 @@ for confName, sels in configurations:
     iUp = rcanvas.addHistogram(tfactUp, drawOpt = 'HIST')
     iDown = rcanvas.addHistogram(tfactDown, drawOpt = 'HIST')
 
-    rcanvas.printWeb('monophoton/hadronTFactor' + suffix, 'tfactor'+confName, hList = [iUp, iDown, iNom], rList = [iNom, iUp, iDown] )
+    rcanvas.SetLogy(False)
+
+    rcanvas.printWeb('monophoton/hadronTFactor' + suffix, 'tfactor'+confName, hList = [iUp, iDown, iNom], rList = [iNom, iUp, iDown])

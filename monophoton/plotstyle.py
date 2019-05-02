@@ -7,8 +7,8 @@ WEBDIR = os.environ['HOME'] + '/public_html/cmsplots'
 
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetTextFont(42)
-ROOT.gStyle.SetLabelSize(0.05, 'X')
-ROOT.gStyle.SetLabelSize(0.05, 'Y')
+ROOT.gStyle.SetLabelSize(0.0375, 'X')
+ROOT.gStyle.SetLabelSize(0.0375, 'Y')
 ROOT.gStyle.SetTitleSize(0.05, 'X')
 ROOT.gStyle.SetTitleSize(0.05, 'Y')
 ROOT.gStyle.SetTitleOffset(0.84, 'X')
@@ -57,7 +57,7 @@ def makeText(x1, y1, x2, y2, align = 22, font = 42, size = 0.035, ndc = True):
     return pave
 
 
-def makeAxis(axis, xmin = 0., xmax = 1., x = 0., ymin = 0., ymax = 1., y = 0., vmin = 0., vmax = 1., ndiv = 205, font = 42, titleSize = 0.048, log = False, blank = True, opposite = False):
+def makeAxis(axis, xmin = 0., xmax = 1., x = 0., ymin = 0., ymax = 1., y = 0., vmin = 0., vmax = 1., ndiv = 205, font = 42, titleSize = 0.05, log = False, blank = True, opposite = False):
     if axis == 'X':
         args = (xmin, y, xmax, y, vmin, vmax, ndiv)
     elif axis == 'Y':
@@ -85,7 +85,7 @@ def makeAxis(axis, xmin = 0., xmax = 1., x = 0., ymin = 0., ymax = 1., y = 0., v
     if titleSize > 0.:
         gaxis.SetTitleOffset(ROOT.gStyle.GetTitleOffset(axis) * 0.048 / titleSize)
     gaxis.SetTitleSize(titleSize)
-    gaxis.SetLabelSize(0.875 * titleSize)
+    gaxis.SetLabelSize(0.75 * titleSize)
     gaxis.SetTickLength(0.03)
     gaxis.SetGridLength(0.)
 
@@ -109,7 +109,7 @@ class Legend(object):
         self.legend = ROOT.TLegend(x1, y1, x2, y2)
         self.legend.SetFillStyle(0)
         self.legend.SetBorderSize(0)
-        self.legend.SetTextSize(0.0375)
+        self.legend.SetTextSize(0.05)
         self.legend.SetTextFont(42)
         self.legend.SetTextAlign(12)
 
@@ -262,7 +262,7 @@ class SimpleCanvas(object):
     YMIN = 0.12
     YMAX = 0.92
 
-    def __init__(self, name = 'cSimple', title = 'simple', lumi = -1., sim = False, cms = True, prelim = True, xmax = None):
+    def __init__(self, name = 'cSimple', title = 'simple', lumi = -1., sim = False, cms = False, prelim = False, xmax = None):
         self.canvas = ROOT.TCanvas(name, title, 600, 600)
         self.canvas.SetTopMargin(1. - SimpleCanvas.YMAX)
         if xmax is not None:
@@ -282,7 +282,7 @@ class SimpleCanvas(object):
         self._logy = True
 
         self.xtitle = ''
-        self.ytitle = ''
+        self.ytitle = 'Number of Events'
 
         self.xlimits = (0., -1.)
         self.ylimits = (0., -1.)
@@ -658,6 +658,7 @@ class SimpleCanvas(object):
 
         self.canvas.Print(targetDir + '/' + name + '.pdf', 'pdf')
         self.canvas.Print(targetDir + '/' + name + '.png', 'png')
+        self.canvas.Print(targetDir + '/' + name + '.C', 'C')
 
         self._fixTHStack(**options)
 
@@ -671,7 +672,7 @@ class TwoDimCanvas(SimpleCanvas):
     2D version of SimpleCanvas
     """
 
-    def __init__(self, name = 'cTwoDim', title = 'TwoDim', lumi = -1., sim = False, cms = True, prelim = True, xmax = None):
+    def __init__(self, name = 'cTwoDim', title = 'TwoDim', lumi = -1., sim = False, cms = False, prelim = False, xmax = None):
         SimpleCanvas.__init__(self, name = name, title = title, lumi = lumi, sim = sim, cms = cms, prelim = prelim, xmax = xmax)
 
         ROOT.gStyle.SetTitleOffset(200., 'X')
@@ -1047,13 +1048,13 @@ class RatioCanvas(SimpleCanvas):
     RATIO_YMIN = 0.1
     RATIO_YMAX = 0.29
 
-    def __init__(self, name = 'cRatio', title = 'Ratio', lumi = -1., sim = False, cms = True, prelim = True):
+    def __init__(self, name = 'cRatio', title = 'Ratio', lumi = -1., sim = False, cms = False, prelim = False):
         SimpleCanvas.__init__(self, name = name, title = title, lumi = lumi, sim = sim, cms = cms, prelim = prelim)
 
         self.canvas.SetCanvasSize(600, 680)
 
         self.xaxis = makeAxis('X', xmin = SimpleCanvas.XMIN, xmax = SimpleCanvas.XMAX, y = RatioCanvas.RATIO_YMIN)
-        self.xaxis.SetTitleOffset(self.xaxis.GetTitleOffset() * 1.1)
+        self.xaxis.SetTitleOffset(self.xaxis.GetTitleOffset() * 1.05)
 
         self.xaxism = makeAxis('X', xmin = SimpleCanvas.XMIN, xmax = SimpleCanvas.XMAX, y = RatioCanvas.PLOT_YMIN, titleSize = 0.)
 
@@ -1355,7 +1356,7 @@ class RatioCanvas(SimpleCanvas):
 
 class DataMCCanvas(RatioCanvas):
 
-    def __init__(self, name = 'cDataMC', title = 'Data / MC', lumi = -1., sim = False, cms = True, prelim = True):
+    def __init__(self, name = 'cDataMC', title = 'Data / MC', lumi = -1., sim = False, cms = False, prelim = False):
         RatioCanvas.__init__(self, name = name, title = title, lumi = lumi, sim = sim, cms = cms, prelim = prelim)
 
         self._obs = -1
