@@ -18,11 +18,11 @@ from plotstyle import WEBDIR
 
 ### Configuration parameters ###
 
-Version = 'DarkPhoton'
-# Version = 'CustomIDSF'
+# Version = 'DarkPhoton'
+Version = 'GJetsTune' # 'CustomIDSF'
 
 bases = ['medium'] # ['loose', 'medium', 'tight', 'highpt'] 
-mods = ['', '-pixel', '-pixel-chargedpf'] # , '-pixel-monoph'] 
+mods = ['',  '-pixel', '-pixel-monoph'] #  '-pixel-chargedpf'] # , 
 
 # Skims for Purity Calculation
 sphData = ['sph-16b-m', 'sph-16c-m', 'sph-16d-m', 'sph-16e-m', 'sph-16f-m', 'sph-16g-m', 'sph-16h-m']
@@ -81,7 +81,7 @@ photonPtVar = 'photons.scRawPt[0]'
 if lowpt:
     photonPtBinning = [80., 90., 100., 120., 160., 200.]
 else:
-    photonPtBinning = [175,200,250,300,350,400]
+    photonPtBinning = [175,200,250,300,350,400,450]
 
 PhotonPtSels = {
     'PhotonPtInclusive': '{pt} > %d'.format(pt = photonPtVar) % photonPtBinning[0],

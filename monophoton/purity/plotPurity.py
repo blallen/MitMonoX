@@ -17,12 +17,13 @@ outDir = os.path.join(versDir, 'Fitting')
 if not os.path.exists(outDir):
     os.makedirs(outDir)
 
-tune = 'Spring16'
+tune = 'GJetsCWIso' # 'Spring16'
 
 outFile = r.TFile("../data/impurity_" + tune + ".root", "RECREATE")
 
 bases = s.bases
 mods = s.mods
+titles = ['e/#gamma only',  'e/#gamma + pixel veto', 'e/#gamma + pixel veto + #gamma-specific'] #
 PhotonIds = [base+mod for base in bases for mod in mods]
 PhotonPtSels = sorted(s.PhotonPtSels.keys())[:-1]
 MetSels = sorted(s.MetSels.keys())[1:2]
@@ -115,7 +116,7 @@ for loc in s.Locations[:1]:
             canvas.cd()
             canvas.Clear()
             canvas.legend.Clear()
-            canvas.legend.setPosition(0.45, 0.7, 0.8, 0.9)
+            canvas.legend.setPosition(0.25, 0.725, 0.8, 0.925)
 
             for iMod, mod in enumerate(mods):
                 
@@ -143,17 +144,18 @@ for loc in s.Locations[:1]:
                     pGraph.SetPointError(iB, exl, exh, purity[1], purity[1])
 
                #  if not 'max' in mod:
-                canvas.legend.add(base+mod, title = base+mod, mcolor = r.kBlue+iMod, lcolor = r.kBlue+iMod, lwidth = 2)
+                canvas.legend.add(base+mod, title = titles[mods.index(mod)], mcolor = r.kBlue+iMod, lcolor = r.kBlue+iMod, lwidth = 2)
                 canvas.legend.apply(base+mod, pGraph)
                 canvas.addHistogram(pGraph, drawOpt = 'EP')
 
                 outFile.cd()
                 pGraph.Write()
                 
-            canvas.ylimits = (0.0, 15.0)
-            canvas.ytitle = 'Photon Impurity'
+            canvas.xlimits = (175., 500.)
+            canvas.ylimits = (0.0, 10.0)
+            canvas.ytitle = 'Photon Impurity (%)'
             canvas.xtitle = 'E_{T}^{#gamma} (GeV)'
-            canvas.SetGridy(True)
+            # canvas.SetGridy(True)
 
             plotName = 'Plot_' + tune + '_impurity_' + str(metCut) + '_' + str(loc) + '_' + str(base)
             canvas.printWeb('purity/'+s.Version+'/Fitting', plotName, logy = False)

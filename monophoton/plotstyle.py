@@ -521,7 +521,7 @@ class SimpleCanvas(object):
             base.SetMaximum(maximum)
 
             base.GetXaxis().SetTitleOffset(1.15)
-            base.GetYaxis().SetTitleOffset(1.5)
+            base.GetYaxis().SetTitleOffset(1.15)
 
             if base.InheritsFrom(ROOT.THStack.Class()) and base.GetHistogram():
                 # THStack has an absolutely retarded hard-coded weird override of minimum and maximum:

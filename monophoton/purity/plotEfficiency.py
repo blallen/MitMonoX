@@ -18,7 +18,7 @@ outDir = os.path.join(versDir, 'ScaleFactors')
 if not os.path.exists(outDir):
     os.makedirs(outDir)
 
-tune = 'Spring16' # 'GJetsCWIso'
+tune = 'GJetsCWIso' # 'Spring16'
 
 outFile = r.TFile("../data/pvsf_" + tune + ".root", "RECREATE")
 
@@ -229,24 +229,25 @@ for loc in s.Locations[:1]:
             canvas.legend.apply(loc+'-'+base, gSF)
             canvas.addHistogram(gSF, drawOpt = 'EP')
             
-            rcanvas.ylimits = (0.75, 1.0)
-            # rcanvas.rlimits = (0.9, 1.1)
+            rcanvas.xlimits = (175., 500.)
+            rcanvas.ylimits = (0.8, 1.0)
             rcanvas.ytitle = 'Pixel Veto Efficiency'
             rcanvas.xtitle = 'E_{T}^{#gamma} (GeV)'
-            rcanvas.SetGridy(True)
+            # rcanvas.SetGridy(True)
 
             suffix = str(tune) + '_' + str(metCut) + '_' + str(loc) + '_'  +str(base)
 
             plotName = 'efficiency_' + suffix
             rcanvas.printWeb('purity/'+s.Version+'/ScaleFactors', plotName, logy = False)
             
+            canvas.xlimits = (175., 500.)
             canvas.ylimits = (0.95, 1.05)
             canvas.ytitle = 'Pixel Veto Scale Factor'
             canvas.xtitle = 'E_{T}^{#gamma} (GeV)'
-            canvas.SetGridy(True)
+            # canvas.SetGridy(True)
 
             plotName = 'scalefactor_' + suffix
-            canvas.printWeb('purity/'+s.Version+'/ScaleFactors', plotName, logy = False)
+            canvas.printWeb('purity/'+s.Version+'/ScaleFactors', plotName, logy = False, drawLegend = False)
 
 outFile.Close()
 
