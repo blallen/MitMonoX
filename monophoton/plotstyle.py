@@ -7,9 +7,9 @@ WEBDIR = os.environ['HOME'] + '/public_html/cmsplots'
 
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetTextFont(42)
-ROOT.gStyle.SetLabelSize(0.0375, 'X')
-ROOT.gStyle.SetLabelSize(0.0375, 'Y')
-ROOT.gStyle.SetTitleSize(0.05, 'X')
+ROOT.gStyle.SetLabelSize(0.045, 'X')
+ROOT.gStyle.SetLabelSize(0.05, 'Y')
+ROOT.gStyle.SetTitleSize(0.045, 'X')
 ROOT.gStyle.SetTitleSize(0.05, 'Y')
 ROOT.gStyle.SetTitleOffset(0.84, 'X')
 ROOT.gStyle.SetTitleOffset(1.3, 'Y')
@@ -83,9 +83,9 @@ def makeAxis(axis, xmin = 0., xmax = 1., x = 0., ymin = 0., ymax = 1., y = 0., v
     gaxis.SetLabelFont(font)
     gaxis.SetTitleFont(font)
     if titleSize > 0.:
-        gaxis.SetTitleOffset(ROOT.gStyle.GetTitleOffset(axis) * 0.048 / titleSize)
+        gaxis.SetTitleOffset(ROOT.gStyle.GetTitleOffset(axis) * 0.05 / titleSize)
     gaxis.SetTitleSize(titleSize)
-    gaxis.SetLabelSize(0.75 * titleSize)
+    gaxis.SetLabelSize(0.95 * titleSize)
     gaxis.SetTickLength(0.03)
     gaxis.SetGridLength(0.)
 
@@ -1053,15 +1053,15 @@ class RatioCanvas(SimpleCanvas):
 
         self.canvas.SetCanvasSize(600, 680)
 
-        self.xaxis = makeAxis('X', xmin = SimpleCanvas.XMIN, xmax = SimpleCanvas.XMAX, y = RatioCanvas.RATIO_YMIN)
-        self.xaxis.SetTitleOffset(self.xaxis.GetTitleOffset() * 1.05)
+        self.xaxis = makeAxis('X', xmin = SimpleCanvas.XMIN, xmax = SimpleCanvas.XMAX, y = RatioCanvas.RATIO_YMIN, titleSize = 0.045)
+        # self.xaxis.SetTitleOffset(self.xaxis.GetTitleOffset() * 1.05)
 
         self.xaxism = makeAxis('X', xmin = SimpleCanvas.XMIN, xmax = SimpleCanvas.XMAX, y = RatioCanvas.PLOT_YMIN, titleSize = 0.)
 
         self.yaxis = makeAxis('Y', ymin = RatioCanvas.PLOT_YMIN, ymax = RatioCanvas.PLOT_YMAX, x = SimpleCanvas.XMIN, vmin = 0.1, vmax = 1., log = True)
         self.yaxisr = makeAxis('Y', ymin = RatioCanvas.PLOT_YMIN, ymax = RatioCanvas.PLOT_YMAX, x = SimpleCanvas.XMAX, vmin = 0.1, vmax = 1., titleSize = 0., log = True, opposite = True)
 
-        self.raxis = makeAxis('Y', ymin = RatioCanvas.RATIO_YMIN, ymax = RatioCanvas.RATIO_YMAX, x = SimpleCanvas.XMIN, vmax = 2., titleSize = 0.036)
+        self.raxis = makeAxis('Y', ymin = RatioCanvas.RATIO_YMIN, ymax = RatioCanvas.RATIO_YMAX, x = SimpleCanvas.XMIN, vmax = 2., titleSize = 0.04)
         self.raxisr = makeAxis('Y', ymin = RatioCanvas.RATIO_YMIN, ymax = RatioCanvas.RATIO_YMAX, x = SimpleCanvas.XMAX, vmax = 2., titleSize = 0., opposite = True)
         self.raxis.SetTickLength(0.09)
         self.raxisr.SetTickLength(0.09)

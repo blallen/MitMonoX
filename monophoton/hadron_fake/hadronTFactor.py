@@ -267,13 +267,13 @@ for confName, sels in configurations:
     rcanvas.legend.Clear()
 
     # if samp == 'Down':
-    rcanvas.ylimits = (0., 0.15)
+    rcanvas.ylimits = (0., 0.16)
     # else:
     # rcanvas.ylimits = (0., 0.05)
     rcanvas.xtitle = canvas.xtitle
-    rcanvas.ytitle = "R_{h}"
+    rcanvas.ytitle = "Hadron Fake Rate R_{h}"
     rcanvas.rtitle = "#pm 1#sigma / Nominal"
-    rcanvas.rlimits = (0.8, 1.2)
+    rcanvas.rlimits = (0.75, 1.25)
 
     rcanvas.legend.add(tname, title = 'transfer factor', lcolor = ROOT.kBlack, lwidth = 2)
     rcanvas.legend.add(tname+'Syst', title = 'impurity #pm 1#sigma', lcolor = ROOT.kBlack, lwidth = 2, lstyle = ROOT.kDashed)
