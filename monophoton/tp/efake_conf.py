@@ -1,11 +1,12 @@
 import os
 
-outputName = 'idsf' # 'efake_old' # 17_pixelpf'
+outputName = 'efake' # 'efake_old' # 17_pixelpf'
 outputDir = '/data/t3home000/' + os.environ['USER'] + '/monophoton16/' + outputName 
-roofitDictsDir = '/home/yiiyama/cms/studies/RooFit'
+roofitDictsDir = os.environ['CMSSW_BASE'] + '/src/RooFit'
+print roofitDictsDir
 
-# PRODUCT = 'frate'
-PRODUCT = 'eff'
+PRODUCT = 'frate'
+# PRODUCT = 'eff'
 
 analysis = 'monophoton'
 # analysis = 'darkphoton'

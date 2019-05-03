@@ -30,7 +30,7 @@ sys.argv = []
 import ROOT
 ROOT.gROOT.SetBatch(True)
 
-ROOT.gSystem.Load('libRooFit.so')
+# ROOT.gSystem.Load('libRooFit.so')
 ROOT.gROOT.LoadMacro(basedir + '/../common/MultiDraw.cc+')
 ROOT.gSystem.Load(roofitDictsDir + '/libCommonRooFit.so') # defines KeysShape
 

@@ -22,13 +22,14 @@ def plotFit(mass, targHist, model, dataType, suffix, bkgModel = 'nombkgModel', h
         canvas = RatioCanvas(lumi = lumi, sim = (dataType == 'mc'))
 
     canvas.Clear(full = True)
+    canvas.rtitle = '(data - fit) / #sigma_{data}'
     canvas.titlePave.SetX2NDC(0.5)
     canvas.legend.setPosition(0.6, 0.7, 0.9, 0.9)
     canvas.legend.add('obs', title = 'Observed', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
     canvas.legend.add('fit', title = 'Fit', opt = 'L', lcolor = ROOT.kBlue, lwidth = 2, lstyle = ROOT.kSolid)
-    canvas.legend.add('bkg', title = 'Bkg component', opt = 'L', lcolor = ROOT.kGreen, lwidth = 2, lstyle = ROOT.kDashed)
+    canvas.legend.add('bkg', title = 'Background', opt = 'L', lcolor = ROOT.kGreen, lwidth = 2, lstyle = ROOT.kDashed)
     if hmcbkg:
-        canvas.legend.add('mcbkg', title = 'Bkg (MC truth)', opt = 'LF', lcolor = ROOT.kRed, lwidth = 1, fcolor = ROOT.kRed, fstyle = 3003)
+        canvas.legend.add('mcbkg', title = 'Background (MC truth)', opt = 'LF', lcolor = ROOT.kRed, lwidth = 1, fcolor = ROOT.kRed, fstyle = 3003)
 
     if targHist.sumEntries() > 500.:
         plotBinning = plotBinningT
@@ -48,7 +49,9 @@ def plotFit(mass, targHist, model, dataType, suffix, bkgModel = 'nombkgModel', h
         canvas.legend.apply('mcbkg', htruth)
         canvas.addHistogram(htruth)
 
-    canvas.rlimits = (-2., 2.)
+    canvas.rlimits = (-2.15, 2.15)
+    canvas.xtitle = "m_{ee} (GeV)" 
+    
     canvas.Update(rList = [], logy = False)
 
     frame.Print()
@@ -76,10 +79,9 @@ def plotFit(mass, targHist, model, dataType, suffix, bkgModel = 'nombkgModel', h
     rdata.SetLineColor(ROOT.kBlack)
 
     canvas.ratioPad.cd()
-    canvas.rtitle = '(data - fit) / #sigma_{data}'
 
     rframe = ROOT.TH1F('rframe', '', 1, *plotBinning[1:])
-    rframe.GetYaxis().SetRangeUser(-2., 2.)
+    rframe.GetYaxis().SetRangeUser(-2.15, 2.15)
     rframe.Draw()
 
     line = ROOT.TLine(plotBinning[1], 0., plotBinning[2], 0.)

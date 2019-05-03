@@ -521,7 +521,7 @@ class SimpleCanvas(object):
             base.SetMaximum(maximum)
 
             base.GetXaxis().SetTitleOffset(1.15)
-            base.GetYaxis().SetTitleOffset(1.15)
+            base.GetYaxis().SetTitleOffset(1.5)
 
             if base.InheritsFrom(ROOT.THStack.Class()) and base.GetHistogram():
                 # THStack has an absolutely retarded hard-coded weird override of minimum and maximum:
@@ -1063,6 +1063,8 @@ class RatioCanvas(SimpleCanvas):
         self.xaxism = makeAxis('X', xmin = SimpleCanvas.XMIN, xmax = SimpleCanvas.XMAX, y = RatioCanvas.PLOT_YMIN, titleSize = 0.)
 
         self.yaxis = makeAxis('Y', ymin = RatioCanvas.PLOT_YMIN, ymax = RatioCanvas.PLOT_YMAX, x = SimpleCanvas.XMIN, vmin = 0.1, vmax = 1., log = True)
+        self.yaxis.SetTitleOffset(1.5)
+
         self.yaxisr = makeAxis('Y', ymin = RatioCanvas.PLOT_YMIN, ymax = RatioCanvas.PLOT_YMAX, x = SimpleCanvas.XMAX, vmin = 0.1, vmax = 1., titleSize = 0., log = True, opposite = True)
 
         self.raxis = makeAxis('Y', ymin = RatioCanvas.RATIO_YMIN, ymax = RatioCanvas.RATIO_YMAX, x = SimpleCanvas.XMIN, vmax = 2., titleSize = 0.04)
