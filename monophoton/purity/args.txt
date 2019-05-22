@@ -1,8 +1,0 @@
-#condor-run /home/yiiyama/cms/studies/MonoX/monophoton/purity/calcPurity.py -e "barrel medium-pixel-max" -t "0to60 GJetsCWIso" -a args.txt
-175to200
-200to250
-250to300
-300to350
-350to400
-400to450
-450to500

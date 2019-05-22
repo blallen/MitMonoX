@@ -5,6 +5,8 @@ import collections
 import time
 import ROOT
 
+from pprint import pprint
+
 thisdir = os.path.dirname(os.path.realpath(__file__))
 basedir = os.path.dirname(thisdir)
 
@@ -19,7 +21,7 @@ from plotstyle import WEBDIR
 ### Configuration parameters ###
 
 # Version = 'DarkPhoton'
-Version = 'GJetsTune' # 'CustomIDSF'
+Version = 'CustomIDSF' # 'GJetsTune'
 
 bases = ['medium'] # ['loose', 'medium', 'tight', 'highpt'] 
 mods = ['',  '-pixel', '-pixel-monoph'] #  '-pixel-chargedpf'] # , 
@@ -81,7 +83,7 @@ photonPtVar = 'photons.scRawPt[0]'
 if lowpt:
     photonPtBinning = [80., 90., 100., 120., 160., 200.]
 else:
-    photonPtBinning = [175,200,250,300,350,400,450]
+    photonPtBinning = [175,200,250,300,350,400]
 
 PhotonPtSels = {
     'PhotonPtInclusive': '{pt} > %d'.format(pt = photonPtVar) % photonPtBinning[0],
@@ -89,6 +91,8 @@ PhotonPtSels = {
 }
 for low, high in zip(photonPtBinning, photonPtBinning[1:]):
     PhotonPtSels['PhotonPt%dto%d' % (low, high)] = '({pt} > %d && {pt} < %d)'.format(pt = photonPtVar) % (low, high)
+
+pprint(PhotonPtSels)
 
 metBinning = [0, 60, 120]
 MetSels = {

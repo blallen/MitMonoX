@@ -27,7 +27,7 @@ gStyle.SetOptStat(0)
 RooMsgService.instance().setGlobalKillBelow(RooFit.WARNING)
 
 QUICKFIT = False # just run one main fit
-FORCEHIST = True # redraw input histograms
+FORCEHIST = False # True # redraw input histograms
 ITERATIVE = False # use iterative method instead of SignalSubtraction.cc
 DOTOYS = True
 
@@ -265,7 +265,7 @@ scanvas = SimpleCanvas(lumi = s.sphLumi)
 def plotSigContam(hdata, hmc, name = '', pdir = plotDir):
     scanvas.Clear(full = True)
     scanvas.titlePave.SetX2NDC(0.5)
-    scanvas.legend.setPosition(0.7, 0.7, 0.9, 0.9)
+    scanvas.legend.setPosition(0.55, 0.7, 0.9, 0.9)
     scanvas.legend.add('obs', title = 'Data sideband', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
     scanvas.legend.add('sig', title = '#gamma+jets MC', opt = 'L', lcolor = ROOT.kRed, lwidth = 2, lstyle = ROOT.kDashed)
 
@@ -311,12 +311,12 @@ def plotSSFit(fitter, purity, nReal, name = '', pdir = plotDir):
     canvas.Clear(full = True)
     canvas.rtitle = 'data / fit'
     canvas.titlePave.SetX2NDC(0.5)
-    canvas.legend.setPosition(0.7, 0.7, 0.9, 0.9)
+    canvas.legend.setPosition(0.625, 0.7, 0.825, 0.9)
     canvas.legend.add('obs', title = 'Observed', opt = 'LP', color = ROOT.kBlack, mstyle = 8)
     canvas.legend.add('fit', title = 'Fit', opt = 'L', lcolor = ROOT.kBlue, lwidth = 2, lstyle = ROOT.kSolid)
-    canvas.legend.add('sig', title = 'Sig component', opt = 'L', lcolor = ROOT.kRed, lwidth = 2, lstyle = ROOT.kDashed)
-    canvas.legend.add('bkg', title = 'Unsubtracted bkg', opt = 'L', lcolor = ROOT.kMagenta, lwidth = 2, lstyle = ROOT.kDashed)
-    canvas.legend.add('subbkg', title = 'Subtracted bkg', opt = 'L', lcolor = ROOT.kGreen, lwidth = 2, lstyle = ROOT.kDashed)
+    canvas.legend.add('sig', title = 'Signal', opt = 'L', lcolor = ROOT.kRed, lwidth = 2, lstyle = ROOT.kDashed)
+    canvas.legend.add('bkg', title = 'Background', opt = 'L', lcolor = ROOT.kMagenta, lwidth = 2, lstyle = ROOT.kDashed)
+    canvas.legend.add('subbkg', title = 'Subtracted', opt = 'L', lcolor = ROOT.kGreen, lwidth = 2, lstyle = ROOT.kDashed)
 
     canvas.legend.apply('obs', target)
     canvas.legend.apply('fit', total)
@@ -335,6 +335,7 @@ def plotSSFit(fitter, purity, nReal, name = '', pdir = plotDir):
     text = '#splitline{Purity: ' + str(round(purity,3)) + '}{N_{True #gamma}: ' + str(int(nReal)) + '}'
     canvas.addText(text, 0.4, 0.3, 0.7, 0.5) 
     canvas.xtitle = '#sigma_{i#etai#eta}'
+    canvas.ylimits = (0.05, 1.e5)
 
     canvas.printWeb(pdir, 'ssfit_' + name + '_logy', rList = [iFit, iTarget], logy = True)
     

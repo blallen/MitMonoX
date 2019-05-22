@@ -21,9 +21,9 @@ mods = s.mods
 PhotonIds = [base+mod for base in bases for mod in mods]
 # PhotonIds.append('none')
 
-for era in ['Spring16']:
+for era in ['GJetsCWIso']:
     for loc in s.Locations[:1]:
-        for pt in sorted(s.PhotonPtSels.keys())[:]:
+        for pt in sorted(s.PhotonPtSels.keys())[3:]:
             for met in sorted(s.MetSels.keys())[1:2]:
                 for sel in PhotonIds:
                     outDir = scratchPath + '/' + era + '_' + loc + '_' + sel + '_' + pt + '_' + met
@@ -35,7 +35,7 @@ for era in ['Spring16']:
 
 argFile.close()
 # sys.exit(0)
-
+"""
 mceff = Popen( ['/home/ballen/bin/condor-run', 'calcEfficiency.py', '-a', 'condorArgs.txt'], stdout = PIPE, stderr = PIPE )
 for mout_line in iter(mceff.stdout.readline, ''):
      sys.stdout.write(mout_line)
@@ -44,7 +44,7 @@ return_code = mceff.wait()
 (mout, merr) = mceff.communicate()
 #print mout, '\n'
 print merr, '\n'
-
+"""
 # sys.exit(0)
 
 submit = Popen( ['/home/ballen/bin/condor-run', 'calcPurity.py', '-a', 'condorArgs.txt'], stdout = PIPE, stderr = PIPE )
